@@ -1,0 +1,6 @@
+{   
+    "python.defaultInterpreterPath": "ansi-venv/bin/python3",
+    "python.linting.enabled": true,
+    "python.linting.pylintPath": "ansi-venv/bin/pylint",
+    "python.linting.pylintEnabled": true
+}
