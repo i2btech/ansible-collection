@@ -9,66 +9,76 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: my_test
-
-short_description: This is my test module
-
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
+module: bitbucket_repo_perm
+short_description: Manage permissions for a repository on Bitbucket Cloud
 version_added: "1.0.0"
-
-description: This is my longer description explaining my test module.
-
+description:
+    - Manage permissions for a repository on Bitbucket Cloud
 options:
-    name:
-        description: This is the message to send to the test module.
-        required: true
-        type: str
-    new:
+    username:
         description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
-        required: false
-        type: bool
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
-extends_documentation_fragment:
-    - my_namespace.my_collection.my_doc_fragment_name
-
+            - Username used for authentication.
+        type: str
+        required: true
+    password:
+        description:
+            - Password used for authentication.
+        type: str
+        required: true
+    repository:
+        description:
+            - Repository name.
+        type: str
+        required: true
+    permissions:
+        description: List of permissions that will be granted
+        type: list
+        elements: dict
+        required: true
+        suboptions:
+            type:
+                type: str
+                description:
+                - Type of member to grant permission
+                - Currently we only support type group
+                choices: [ group, user ]
+                required: true
+            name:
+                type: str
+                description:
+                - Name of group or user
+                required: true
+            permission:
+                type: str
+                description:
+                - Type of permission that will be granted
+                choices: [ admin, write, read ]
+                required: true
 author:
-    - Your Name (@yourGitHubHandle)
+    - IT I2B (it@i2btech.com)
 '''
 
 EXAMPLES = r'''
-# Pass in a message
-- name: Test with a message
-  my_namespace.my_collection.my_test:
-    name: hello world
-
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_namespace.my_collection.my_test:
-    name: hello world
-    new: true
-
-# fail the module
-- name: Test failure of the module
-  my_namespace.my_collection.my_test:
-    name: fail me
+- name: "Set permissions for repository X"
+  i2b.general.bitbucket_repo_perm:
+  username: "alice"
+  password: "app_password"
+  repository: "example-X"
+  permissions:
+    - type: group
+      name: administrators
+      permission: admin
+    - type: group
+      name: developers
+      permission: write
 '''
 
 RETURN = r'''
-# These are examples of possible return values, and in general should use other names for return values.
-original_message:
-    description: The original name param that was passed in.
-    type: str
-    returned: always
-    sample: 'hello world'
 message:
-    description: The output message that the test module generates.
-    type: str
+    description: Placeholder for return value
+    type: dict
     returned: always
-    sample: 'goodbye'
+    sample: []
 '''
 
 #pylint: disable=wrong-import-position
