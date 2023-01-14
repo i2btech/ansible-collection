@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" bitbucket_repo module """
+""" repo module """
 
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,7 +9,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: bitbucket_repo_env
+module: repo_env
 short_description: Manage deployment environments for a repository on Bitbucket Cloud
 version_added: "1.0.0"
 description:
@@ -77,7 +77,7 @@ author:
 
 EXAMPLES = r'''
 - name: "Set deployment environments for repository X"
-  i2b.general.bitbucket_repo_var:
+  i2btech_it.bitbucket.repo_var:
   username: "alice"
   password: "app_password"
   repository: "example-X"

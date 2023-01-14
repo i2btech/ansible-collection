@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" bitbucket_repo_perm module """
+""" repo_perm module """
 
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,7 +9,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: bitbucket_repo_perm
+module: repo_perm
 short_description: Manage permissions for a repository on Bitbucket Cloud
 version_added: "1.0.0"
 description:
@@ -60,7 +60,7 @@ author:
 
 EXAMPLES = r'''
 - name: "Set permissions for repository X"
-  i2b.general.bitbucket_repo_perm:
+  i2btech_it.bitbucket.repo_perm:
   username: "alice"
   password: "app_password"
   repository: "example-X"

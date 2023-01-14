@@ -8,6 +8,7 @@
 args.json
 args_*.json
 ansi-venv
+*.tar.gz
 
 # Node artifact files
 node_modules/

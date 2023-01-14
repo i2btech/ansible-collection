@@ -2,7 +2,7 @@
 # The namespace of the collection. This can be a company/brand/organization or product namespace under which all
 # content lives. May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with
 # underscores or numbers and cannot contain consecutive underscores
-namespace: i2btech
+namespace: i2btech_it
 
 # The name of the collection. Has the same character restrictions as 'namespace'
 name: bitbucket
@@ -16,7 +16,7 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email> (url)
 # @nicks:irc/im.site#channel'
 authors:
-- your name <example@domain.com>
+- https://github.com/alchandia
 
 
 ### OPTIONAL but strongly recommended
@@ -46,7 +46,7 @@ dependencies: {}
 repository: https://github.com/i2btech/ansible-collection-bitbucket
 
 # The URL to any online docs
-documentation: https://github.com/i2btech/ansible-collection-bitbucket/README.md
+documentation: https://github.com/i2btech/ansible-collection-bitbucket/blob/master/README.md
 
 # The URL to the homepage of the collection/project
 homepage: https://github.com/i2btech/ansible-collection-bitbucket
