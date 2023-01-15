@@ -1,0 +1,14 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+
+    - name: Test repo module
+      repo:
+        username: "xxx"
+        password: "xxx"
+        repository: "example-api"
+        project_key: "POC"
+        state: "present"

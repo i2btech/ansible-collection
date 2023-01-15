@@ -5,8 +5,7 @@
 # Learn more about .gitignore:
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
-args.json
-args_*.json
+pb-repo*.yml
 ansi-venv
 *.tar.gz
 

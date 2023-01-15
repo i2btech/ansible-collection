@@ -109,18 +109,8 @@ message:
 '''
 
 #pylint: disable=wrong-import-position
-
-# TODO: definir la forma correcta de hacer esto, debería funcionar tanto para
-# el caso cuando se llama al script de forma local y cuando se llama desde un playbook
-import sys
-import os
-script_dir = os.path.dirname( __file__ )
-mymodule_dir = os.path.join( script_dir, '..', 'module_utils' )
-sys.path.append( mymodule_dir )
-from bitbucket import BitbucketHelper
-
+from ansible_collections.i2btech_it.bitbucket.plugins.module_utils.bitbucket import BitbucketHelper
 from ansible.module_utils.basic import AnsibleModule
-
 #pylint: disable=wrong-import-position
 
 def manage_environments(result, bitbucket, module):

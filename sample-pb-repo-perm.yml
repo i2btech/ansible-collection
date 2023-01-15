@@ -1,0 +1,19 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+
+    - name: Test repo_perm module
+      repo_perm:
+        username: "xxx"
+        password: "xxx"
+        repository: "example-api"
+        permissions:
+          - type: group
+            name: administrators
+            permission: admin
+          - type: group
+            name: developers
+            permission: write

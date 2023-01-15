@@ -1,0 +1,29 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+
+    - name: Test repo_perm module
+      repo_env:
+        username: "xxx"
+        password: "xxx"
+        repository: "example-api"
+        environments:
+          - name: Integration
+            type: Test
+            variables:
+              - name: user
+                value: user_db
+              - name: pass
+                value: _super_secret_pass_
+                secured: True
+          - name: Production
+            type: Production
+            variables:
+              - name: user
+                value: user_db
+              - name: pass
+                value: _super_secret_pass_
+                secured: True

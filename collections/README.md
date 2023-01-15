@@ -1,0 +1,1 @@
+This folder allow us to simulate a live environment where the collection was installed

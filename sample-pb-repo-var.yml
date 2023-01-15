@@ -1,0 +1,18 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+
+    - name: Test repo_var module
+      repo_var:
+        username: "xxx"
+        password: "xxx"
+        repository: "example-api"
+        variables:
+          - name: user
+            value: xxx
+          - name: pass
+            value: yyy
+            secured: True
