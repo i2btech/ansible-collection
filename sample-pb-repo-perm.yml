@@ -13,7 +13,7 @@
         permissions:
           - type: group
             name: administrators
-            permission: admin
+            perm: admin
           - type: group
             name: developers
-            permission: write
+            perm: write
