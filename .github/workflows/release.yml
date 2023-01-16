@@ -42,7 +42,7 @@ jobs:
           tag_name: v${{ steps.cversion.outputs.version }}
           release_name: Release v${{ steps.cversion.outputs.version }}
           body: |
-            # Ansible Collection: i2btech_it.bitbucket
+            # Ansible Collection: i2btech.bitbucket
 
             Install with:
             ```sh
@@ -53,7 +53,7 @@ jobs:
             ```yaml
             ---
             collections:
-                - https://github.com/i2btech/ansible-collection-bitbucket/releases/download/v${{ steps.cversion.outputs.version }}/i2btech_it-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
+                - https://github.com/i2btech/ansible-collection-bitbucket/releases/download/v${{ steps.cversion.outputs.version }}/i2btech-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
             ```
           draft: false
           prerelease: false
@@ -65,9 +65,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: i2btech_it-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
-          asset_name: i2btech_it-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
+          asset_path: i2btech-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
+          asset_name: i2btech-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz
           asset_content_type: application/tar+gzip
 
       - name: Deploy Ansible collection to Galaxy
-        run: ansible-galaxy collection publish i2btech_it-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz --api-key ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
+        run: ansible-galaxy collection publish i2btech-bitbucket-${{ steps.cversion.outputs.version }}.tar.gz --api-key ${{ secrets.ANSIBLE_GALAXY_API_KEY }}

@@ -9,6 +9,6 @@
       repo:
         username: "xxx"
         password: "xxx"
-        repository: "example-api"
+        repository: "poc-sample"
         project_key: "POC"
         state: "present"

@@ -9,7 +9,7 @@
       repo_var:
         username: "xxx"
         password: "xxx"
-        repository: "example-api"
+        repository: "poc-sample"
         variables:
           - name: user
             value: xxx

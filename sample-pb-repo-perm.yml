@@ -9,7 +9,7 @@
       repo_perm:
         username: "xxx"
         password: "xxx"
-        repository: "example-api"
+        repository: "poc-sample"
         permissions:
           - type: group
             name: administrators

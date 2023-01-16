@@ -9,7 +9,7 @@
       repo_env:
         username: "xxx"
         password: "xxx"
-        repository: "example-api"
+        repository: "poc-sample"
         environments:
           - name: Integration
             type: Test
