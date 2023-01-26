@@ -1,1 +1,1 @@
-This folder allow us to simulate a live environment where the collection was installed
+This folder allow us to simulate a live environment where the collection will be installed and use the sample playbooks to test the execution of the modules

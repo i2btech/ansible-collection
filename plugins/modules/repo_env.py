@@ -10,10 +10,10 @@ __metaclass__ = type
 DOCUMENTATION = r'''
 ---
 module: repo_env
-short_description: Manage deployment environments for a repository on Bitbucket Cloud
+short_description: Manage deployment environment for a repository on Bitbucket Cloud
 version_added: "1.0.0"
 description:
-    - Manage deployment environments for a repository on Bitbucket Cloud
+    - Manage deployment environment for a repository on Bitbucket Cloud
 options:
     username:
         description:
@@ -30,8 +30,19 @@ options:
             - Repository name.
         type: str
         required: true
-    environments:
-        description: List of deployment environmnets that will be created
+    name:
+        type: str
+        description:
+            - Name of environment
+        required: true
+    type:
+        type: str
+        description:
+            - Type of deployment environment
+        choices: [ Test, Staging, Production ]
+        required: true
+    variables:
+        description: List of variables that will be managed
         type: list
         elements: dict
         required: true
@@ -39,38 +50,21 @@ options:
             name:
                 type: str
                 description:
-                - Name of environment
+                    - Name of the variable
                 required: true
-            type:
+            value:
                 type: str
                 description:
-                - Type of deployment environment
-                choices: [ Test, Staging, Production ]
+                    - Value of the variable
                 required: true
-            variables:
-                description: List of variables that will be managed
-                type: list
-                elements: dict
-                required: true
-                suboptions:
-                    name:
-                        type: str
-                        description:
-                        - Name of the variable
-                        required: true
-                    value:
-                        type: str
-                        description:
-                        - Value of the variable
-                        required: true
-                    secured:
-                        type: bool
-                        description:
-                        - If true, variable will be encrypted and masked in the logs
-                        - If true, the module will always finish with a state of changed. The Bitbucket Cloud API don't allow to check
-                        the current value of a secured variable thus we need to always update tha value to applies possible changes on the value
-                        - If false, you need to delete the variable to change it to secured
-                        required: false
+            secured:
+                type: bool
+                description:
+                - If true, variable will be encrypted and masked in the logs
+                - If true, the module will always finish with a state of changed. The Bitbucket Cloud API don't allow to check
+                the current value of a secured variable thus we need to always update tha value to applies possible changes on the value
+                - If false, you need to delete the variable to change it to secured
+                required: false
 author:
     - IT I2B (it@i2btech.com)
 '''
@@ -81,23 +75,14 @@ EXAMPLES = r'''
   username: "alice"
   password: "app_password"
   repository: "example-X"
-  environments:
-    - name: Integration
-      type: Test
-      variables:
-        - name: user
-          value: user_db
-        - name: pass
-          value: _super_secret_pass_
-          secured: True
-    - name: Production
-      type: Production
-      variables:
-        - name: user
-          value: user_db
-        - name: pass
-          value: _super_secret_pass_
-          secured: True
+  name: Integration
+  type: Test
+  variables:
+    - name: user
+      value: user_db
+    - name: pass
+      value: _super_secret_pass_
+      secured: True
 '''
 
 RETURN = r'''
@@ -117,50 +102,32 @@ def manage_environments(result, bitbucket, module):
     """ CRUD environments """
 
     current_environments = bitbucket.get_repository_environments()
-    new_environments = []
+    env_exists = False
+    env_uuid = None
+    for x in current_environments:
+        if module.params['name'].lower() == x['name'].lower() and module.params['type'].lower() == x['environment_type']['name'].lower():
+            env_exists = True
+            env_uuid = x['uuid']
+            break
 
-    if module.params['environments'] is not None:
-        for var in module.params['environments']:
-            new_environments.extend([var])
+    if env_exists:
+        # environment exists, manage variables associated with it if they exists
+        if module.params['variables'] is not None:
+            api_url=bitbucket.BITBUCKET_API_ENDPOINTS['repos-deployments'].format(
+                        url=module.params['url'],
+                        workspace='i2b',
+                        repo_slug=module.params['repository'])
+            current_variables = bitbucket.get_variables(api_url + "/environments/" + env_uuid + "/variables")
+            manage_environment_variables(result, bitbucket, env_uuid, current_variables, module.params['variables'])
 
-    # action for current environments
-    for i in current_environments:
-        if not any(
-            x['name'].lower() == i['name'].lower() and x['type'].lower() == i['environment_type']['name'].lower()
-                for x in new_environments
-        ):
-            # current environment doesn't exists on new environments, delete it
-            bitbucket.manage_repository_environments('delete', None, None, i['uuid'])
-            result['changed'] = True
-
-    # actions for new environments
-    for i in new_environments:
-        env_exists = False
-        env_uuid = None
-        for x in current_environments:
-            if i['name'].lower() == x['name'].lower() and i['type'].lower() == x['environment_type']['name'].lower():
-                env_exists = True
-                env_uuid = x['uuid']
-                break
-
-        if env_exists:
-            # environment exists, manage variables associated with it if they exists
-            if i['variables'] is not None:
-                api_url=bitbucket.BITBUCKET_API_ENDPOINTS['repos-deployments'].format(
-                            url=module.params['url'],
-                            workspace='i2b',
-                            repo_slug=module.params['repository'])
-                current_variables = bitbucket.get_variables(api_url + "/environments/" + env_uuid + "/variables")
-                manage_environment_variables(result, bitbucket, env_uuid, current_variables, i['variables'])
-
-        else:
-            # environment doesn't exist on current environments, add it
-            new_env = bitbucket.manage_repository_environments('create', i['name'], i['type'])
-            env_uuid = new_env['uuid']
-            # manage variables associated with it
-            if i['variables'] is not None:
-                manage_environment_variables(result, bitbucket, env_uuid, [], i['variables'])
-            result['changed'] = True
+    else:
+        # environment doesn't exist on current environments, add it
+        new_env = bitbucket.manage_repository_environments('create', module.params['name'], module.params['type'])
+        env_uuid = new_env['uuid']
+        # manage variables associated with it
+        if module.params['variables'] is not None:
+            manage_environment_variables(result, bitbucket, env_uuid, [], module.params['variables'])
+        result['changed'] = True
 
 def manage_environment_variables(result, bitbucket, env_uuid, current_variables, new_variables):
     """ CRUD variables of environment """
@@ -223,7 +190,12 @@ def run_module():
             default=False)
     )
 
-    environment_spec = dict(
+    module_args = BitbucketHelper.bitbucket_argument_spec()
+    module_args.update(
+        repository=dict(
+            type='str',
+            required=True,
+            no_log=False),
         name=dict(
             required=True,
             type='str',
@@ -238,22 +210,7 @@ def run_module():
             no_log=False,
             type='list',
             elements='dict',
-            options=variable_spec)
-    )
-
-    module_args = BitbucketHelper.bitbucket_argument_spec()
-    module_args.update(
-        repository=dict(
-            type='str',
-            required=True,
-            no_log=False,
-            aliases=['name']),
-        environments=dict(
-            type='list',
-            elements='dict',
-            required=False,
-            no_log=False,
-            options=environment_spec),
+            options=variable_spec),
     )
 
     # seed the result dict in the object

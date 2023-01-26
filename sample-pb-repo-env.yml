@@ -5,25 +5,30 @@
 
   tasks:
 
-    - name: Test repo_perm module
+    - name: Test repo_env module
       repo_env:
         username: "xxx"
         password: "xxx"
         repository: "poc-sample"
-        environments:
-          - name: Integration
-            type: Test
-            variables:
-              - name: user
-                value: user_db
-              - name: pass
-                value: _super_secret_pass_
-                secured: True
-          - name: Production
-            type: Production
-            variables:
-              - name: user
-                value: user_db
-              - name: pass
-                value: _super_secret_pass_
-                secured: True
+        name: Integration
+        type: Test
+        variables:
+          - name: user
+            value: user_db
+          - name: pass
+            value: _super_secret_pass_
+            secured: True
+
+    - name: Test repo_env module
+      repo_env:
+        username: "xxx"
+        password: "xxx"
+        repository: "poc-sample"
+        name: Production
+        type: Production
+        variables:
+          - name: user
+            value: user_db
+          - name: pass
+            value: _super_secret_pass_
+            secured: True
