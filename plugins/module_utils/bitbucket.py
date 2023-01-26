@@ -378,7 +378,8 @@ class BitbucketHelper:
 
         variables = []
         is_last_page = False
-
+        current_page = 1
+        current_size = 0
         while not is_last_page:
             info, content = self.request(
                 api_url,
@@ -390,9 +391,19 @@ class BitbucketHelper:
                 variables.extend(content['values'])
 
             if 'next' in content:
-                api_url = content['next']
-            else:
+                current_page = sum([current_page, 1])
+                api_url = api_url + "?page=" + str(current_page)
+
+            current_size = sum([current_size, content['pagelen']])
+            if current_size >= content['size']:
                 is_last_page = True
+
+            # this is the logic we need to use to paginate over the response
+            # but the URL included in the "next" option is currently not working
+            # if 'next' in content:
+            #     api_url = content['next']
+            # else:
+            #     is_last_page = True
 
         if info['status'] == 200:
             return variables
