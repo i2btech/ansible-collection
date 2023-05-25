@@ -4,8 +4,9 @@
 
 Install the dependencies and virtual environment for the collection executing this commands:
 ```
-pip install -r requirements.txt
+python -m venv ansi-venv
 source ansi-venv/bin/activate
+pip install -r requirements.txt
 ```
 
 Create a playbook to test the modules using one of the samples located on the root:
@@ -46,4 +47,4 @@ We need pass as parameter an [APP Password](https://support.atlassian.com/bitbuc
 
 - https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#developing-modules-general
 - https://github.com/juanenriqueescobar/bitbucket, example of test and strategy to better handle secured vars
-- https://github.com/NordeaOSS/esp.bitbucket
+- https://github.com/NordeaOSS/esp.bitbucket, base code for the collection

@@ -380,6 +380,7 @@ class BitbucketHelper:
         is_last_page = False
         current_page = 1
         current_size = 0
+        api_url_base = api_url
         while not is_last_page:
             info, content = self.request(
                 api_url,
@@ -390,9 +391,10 @@ class BitbucketHelper:
             if 'values' in content:
                 variables.extend(content['values'])
 
+            # temporary logic to paginate over the response
             if 'next' in content:
                 current_page = sum([current_page, 1])
-                api_url = api_url + "?page=" + str(current_page)
+                api_url = api_url_base + "?page=" + str(current_page)
 
             current_size = sum([current_size, content['pagelen']])
             if current_size >= content['size']:
@@ -400,6 +402,7 @@ class BitbucketHelper:
 
             # this is the logic we need to use to paginate over the response
             # but the URL included in the "next" option is currently not working
+            # https://jira.atlassian.com/browse/BCLOUD-13806
             # if 'next' in content:
             #     api_url = content['next']
             # else:
