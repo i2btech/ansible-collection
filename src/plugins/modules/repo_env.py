@@ -71,7 +71,7 @@ author:
 
 EXAMPLES = r'''
 - name: "Set deployment environments for repository X"
-  i2btech.bitbucket.repo_var:
+  i2btech.ops.repo_var:
   username: "alice"
   password: "app_password"
   repository: "example-X"
@@ -94,7 +94,7 @@ message:
 '''
 
 #pylint: disable=wrong-import-position
-from ansible_collections.i2btech.bitbucket.plugins.module_utils.bitbucket import BitbucketHelper
+from ansible_collections.i2btech.ops.plugins.module_utils.bitbucket import BitbucketHelper
 from ansible.module_utils.basic import AnsibleModule
 #pylint: disable=wrong-import-position
 
