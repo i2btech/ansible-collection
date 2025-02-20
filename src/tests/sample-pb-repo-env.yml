@@ -6,7 +6,7 @@
   tasks:
 
     - name: Test repo_env module
-      repo_env:
+      i2btech.bitbucket.repo_env:
         username: "xxx"
         password: "xxx"
         repository: "poc-sample"
@@ -20,7 +20,7 @@
             secured: True
 
     - name: Test repo_env module
-      repo_env:
+      i2btech.bitbucket.repo_env:
         username: "xxx"
         password: "xxx"
         repository: "poc-sample"

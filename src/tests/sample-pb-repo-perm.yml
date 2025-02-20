@@ -6,7 +6,7 @@
   tasks:
 
     - name: Test repo_perm module
-      repo_perm:
+      i2btech.bitbucket.repo_perm:
         username: "xxx"
         password: "xxx"
         repository: "poc-sample"

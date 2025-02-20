@@ -6,7 +6,7 @@
   tasks:
 
     - name: Test repo_var module
-      repo_var:
+      i2btech.bitbucket.repo_var:
         username: "xxx"
         password: "xxx"
         repository: "poc-sample"
