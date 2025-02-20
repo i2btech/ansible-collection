@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" repo_perm module """
+""" bitbucket_repo_var module """
 
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,11 +9,11 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: repo_perm
-short_description: Manage permissions for a repository on Bitbucket Cloud
+module: bitbucket_repo_var
+short_description: Manage variables for a repository on Bitbucket Cloud
 version_added: "1.0.0"
 description:
-    - Manage permissions for a repository on Bitbucket Cloud
+    - Manage variables for a repository on Bitbucket Cloud
 options:
     username:
         description:
@@ -30,47 +30,46 @@ options:
             - Repository name.
         type: str
         required: true
-    permissions:
-        description: List of permissions that will be granted
+    variables:
+        description: List of variables that will be managed
         type: list
         elements: dict
         required: true
         suboptions:
-            type:
-                type: str
-                description:
-                - Type of member to grant permission
-                - Currently we only support type group
-                choices: [ group, user ]
-                required: true
             name:
                 type: str
                 description:
-                - Name of group or user
+                - Name of the variable
                 required: true
-            permission:
+            value:
                 type: str
                 description:
-                - Type of permission that will be granted
-                choices: [ admin, write, read ]
+                - Value of the variable
                 required: true
+            secured:
+                type: bool
+                description:
+                - If true, variable will be encrypted and masked in the logs
+                - If true, the module will always finish with a state of changed. The Bitbucket Cloud API don't allow to check
+                  the current value of a secured variable thus we need to always update tha value to applies possible changes on the value
+                - If false, you need to delete the variable to change it to secured
+                required: false
 author:
     - IT I2B (it@i2btech.com)
 '''
 
 EXAMPLES = r'''
-- name: "Set permissions for repository X"
-  i2btech.ops.repo_perm:
+- name: "Set variables for repository X"
+  i2btech.ops.bitbucket_repo_var:
   username: "alice"
   password: "app_password"
   repository: "example-X"
-  permissions:
-    - type: group
-      name: administrators
-      permission: admin
-    - type: group
-      name: developers
-      permission: write
+  variables:
+    - name: user
+      value: xxx
+    - name: pass
+      value: yyy
+      secured: True
 '''
 
 RETURN = r'''
@@ -86,45 +85,56 @@ from ansible_collections.i2btech.ops.plugins.module_utils.bitbucket import Bitbu
 from ansible.module_utils.basic import AnsibleModule
 #pylint: disable=wrong-import-position
 
-def manage_permissions(result, bitbucket, module):
-    """ CRUD repo permissions """
+def manage_variables(result, bitbucket, module):
+    """ CRUD variables """
 
-    # get current groups assigned to the repo
-    current_groups = bitbucket.get_repository_permissions_info(scope='group')
-    # get new groups assigned to the repo
-    new_groups = []
-    for perm in module.params['permissions']:
-        if perm['type'] == 'group':
-            new_groups.extend([perm])
+    api_url=bitbucket.BITBUCKET_API_ENDPOINTS['repos-pipeline'].format(
+                url=module.params['url'],
+                workspace='i2b',
+                repo_slug=module.params['repository'])
 
-    # actions for new groups
-    for i in new_groups:
-        group_exists = False
-        group_perm = None
-        for x in current_groups:
-            if i['name'].lower() == x['name'].lower():
-                group_exists = True
-                group_perm = x['perm'].lower()
+    current_variables = bitbucket.get_variables(api_url + "/variables/")
+    new_variables = []
+    for var in module.params['variables']:
+        new_variables.extend([var])
+
+    # actions for new variables
+    for i in new_variables:
+        var_exists = False
+        var_value = None
+        var_uuid = None
+        for x in current_variables:
+            if i['name'].lower() == x['key'].lower():
+                var_exists = True
+                var_uuid = x['uuid']
+                if not x['secured']:
+                    var_value = x['value']
                 break
 
-        if group_exists:
-            # group exists on current groups, update permissions if they are different
-            if not i['perm'].lower() == group_perm:
-                bitbucket.apply_repository_permissions('promote', 'group', i['name'], i['perm'])
+        if var_exists:
+            # always update secured variable
+            if var_value is None:
+                bitbucket.manage_repository_variables('update', i['name'], i['value'], var_uuid, i['secured'])
                 result['changed'] = True
+            # if not secured and value are different, update variable
+            else:
+                if i['value'] != var_value:
+                    bitbucket.manage_repository_variables('update', i['name'], i['value'], var_uuid, i['secured'])
+                    result['changed'] = True
+
         else:
-            # group doesn't exist on current groups, add
-            bitbucket.apply_repository_permissions('promote', 'group', i['name'], i['perm'])
+            # variable doesn't exist on current variables, add
+            bitbucket.manage_repository_variables('create', i['name'], i['value'], None, i['secured'])
             result['changed'] = True
 
-    # action for current groups
-    for i in current_groups:
+    # action for current variables
+    for i in current_variables:
         if not any(
-            i['name'].lower() == x['name'].lower()
-                for x in new_groups
+            i['key'].lower() == x['name'].lower()
+                for x in new_variables
         ):
-            # current group doesn't exists on new groups, delete
-            bitbucket.apply_repository_permissions('demote', 'group', i['name'])
+            # current variable doesn't exists on new variables, delete
+            bitbucket.manage_repository_variables('delete', None, None, i['uuid'], None)
             result['changed'] = True
 
 def run_module():
@@ -132,18 +142,19 @@ def run_module():
 
     # define available arguments/parameters a user can pass to the module
 
-    perm_spec = dict(
-        type=dict(
-            required=True,
-            type='str',
-            choices=['user', 'group']),
+    variable_spec = dict(
         name=dict(
             required=True,
-            type='str'),
-        perm=dict(
-            required=False,
             type='str',
-            choices=['admin', 'write', 'read'])
+            no_log=False,),
+        value=dict(
+            required=True,
+            no_log=True,
+            type='str'),
+        secured=dict(
+            required=False,
+            type='bool',
+            default=False)
     )
 
     module_args = BitbucketHelper.bitbucket_argument_spec()
@@ -153,12 +164,12 @@ def run_module():
             required=True,
             no_log=False,
             aliases=['name']),
-        permissions=dict(
+        variables=dict(
             type='list',
             elements='dict',
             required=False,
             no_log=False,
-            options=perm_spec),
+            options=variable_spec),
     )
 
     # seed the result dict in the object
@@ -191,7 +202,7 @@ def run_module():
     existing_repository = bitbucket.get_repository_info()
 
     if existing_repository:
-        manage_permissions(result, bitbucket, module)
+        manage_variables(result, bitbucket, module)
     else:
         module.fail_json(msg="Repository doesn't exists")
 
@@ -202,7 +213,7 @@ def run_module():
         module.exit_json(**result)
 
 def main():
-    """ main function """
+    """ main funtion """
 
     run_module()
 

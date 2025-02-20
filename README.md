@@ -1,42 +1,20 @@
 # I2B Ansible Collection
 
+# Development
+
 ## Devcontainer
 
+You need to build a docker image to run the devcontainer using this command:
 ```
-# build image
 docker build -f .devcontainer/Dockerfile --tag i2btech/ansible-collection .
 ```
 
-## Development
-
-Install the dependencies and virtual environment for the collection executing this commands:
+Then, you need to create a file to set environment variables, you need to update the values if you need to run some [tests](./tests/README.md)
 ```
-python -m venv ansi-venv
-source ansi-venv/bin/activate
-pip install -r requirements.txt
+cp .devcontainer/.env.sample .devcontainer/.env
 ```
 
-Create a playbook to test the modules using one of the samples located on the root:
-```
-cp sample-pb-XX.yml pb-XX.yml
-```
-
-To execute the modules run one of the following commands:
-```
-ansible-playbook pb-repo.yml
-ansible-playbook pb-repo-perm.yml
-ansible-playbook pb-repo-var.yml
-ansible-playbook pb-repo-env.yml
-```
-
-We need pass as parameter an [APP Password](https://support.atlassian.com/bitbucket-cloud/docs/create-an-app-password/) to interact with the Bitbucket API, the following permissions are needed:
-
-| Repositories  | Pipelines     |
-| ------------- |:-------------:|
-| Read          | Read          |
-| Write         | Write         |
-| Admin         | Edit variables|
-| Delete        |               |
+Now you can start the devcontainer.
 
 ## Caveats about Bitbucket API
 
@@ -45,12 +23,12 @@ We need pass as parameter an [APP Password](https://support.atlassian.com/bitbuc
 - Currently, at 2023-01-13, the [endpoint](https://developer.atlassian.com/cloud/bitbucket/rest/api-group-deployments/#api-repositories-workspace-repo-slug-environments-environment-uuid-changes-post) to update the name of a deployment environment doesn't work, if need to change the name you need to delete manually the environment and re-create it
 - Pagination over the list of variables of a repository or deployment environment is not working, the URL included in the variable "next" of the response deliver an error. We apply a workaround similar to [this](https://jira.atlassian.com/browse/BCLOUD-13806) to fix the error
 
-## TODO
+# TODO
 
 - Adds validation to check if parameter `project_key` exists on `repo` modulue, if not, module need to fail.
 - Add [ansible-test](https://www.ansible.com/blog/introduction-to-ansible-test)
 
-## Links
+# Links
 
 - https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#developing-modules-general
 - https://github.com/juanenriqueescobar/bitbucket, example of test and strategy to better handle secured vars
