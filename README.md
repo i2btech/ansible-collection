@@ -1,4 +1,11 @@
-# Ansible Collection - i2btech.bitbucket
+# I2B Ansible Collection
+
+## Devcontainer
+
+```
+# build image
+docker build -f .devcontainer/Dockerfile --tag i2btech/ansible-collection .
+```
 
 ## Development
 

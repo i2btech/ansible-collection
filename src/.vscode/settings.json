@@ -1,0 +1,7 @@
+{   
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "python.linting.enabled": true,
+    "python.linting.pylintPath": "/home/ubuntu/.local/bin/pylint",
+    "python.linting.pylintEnabled": true,
+    "ansible.python.interpreterPath": "/usr/bin/python3"
+}
