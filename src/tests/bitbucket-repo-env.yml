@@ -1,14 +1,19 @@
-- hosts: localhost
+- name: "Validate configuration of variables for deployment on repo"
+  hosts: localhost
   connection: local
   gather_facts: false
   become: false
 
+  vars_files:
+
+    - vars/vars.yml
+
   tasks:
 
     - name: Test repo_env module
-      repo_env:
-        username: "xxx"
-        password: "xxx"
+      i2btech.ops.bitbucket_repo_env:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
         repository: "poc-sample"
         name: Integration
         type: Test
@@ -17,12 +22,12 @@
             value: user_db
           - name: pass
             value: _super_secret_pass_
-            secured: True
+            secured: true
 
     - name: Test repo_env module
-      repo_env:
-        username: "xxx"
-        password: "xxx"
+      i2btech.ops.bitbucket_repo_env:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
         repository: "poc-sample"
         name: Production
         type: Production
@@ -31,4 +36,4 @@
             value: user_db
           - name: pass
             value: _super_secret_pass_
-            secured: True
+            secured: true

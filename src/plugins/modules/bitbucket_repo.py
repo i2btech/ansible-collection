@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" repo module """
+""" bitbucket_repo module """
 
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,7 +9,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: repo
+module: bitbucket_repo
 short_description: Manage repositories on Bitbucket Cloud
 version_added: "1.0.0"
 description:
@@ -48,7 +48,7 @@ author:
 
 EXAMPLES = r'''
 - name: "Create example repository"
-  i2btech.bitbucket.repo:
+  i2btech.ops.bitbucket_repo:
   username: "alice"
   password: "app_password"
   repository: "example-X"
@@ -65,7 +65,7 @@ message:
 '''
 
 #pylint: disable=wrong-import-position
-from ansible_collections.i2btech.bitbucket.plugins.module_utils.bitbucket import BitbucketHelper
+from ansible_collections.i2btech.ops.plugins.module_utils.bitbucket import BitbucketHelper
 from ansible.module_utils.basic import AnsibleModule
 #pylint: disable=wrong-import-position
 

@@ -1,0 +1,21 @@
+- name: "Validate permission setting on repo"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/vars.yml
+
+  tasks:
+
+    - name: Test repo_perm module
+      i2btech.ops.bitbucket_repo_perm:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        repository: "poc-sample"
+        permissions:
+          - type: group
+            name: admin-junior
+            perm: write
