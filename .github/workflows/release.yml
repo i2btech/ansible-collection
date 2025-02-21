@@ -26,12 +26,15 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd src
           python -m pip install --upgrade pip
           pip install --upgrade ansible
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Build Ansible Collection
-        run: ansible-galaxy collection build
+        run: |
+          cd src
+          ansible-galaxy collection build
 
       - name: Create Release
         id: create_release
@@ -65,9 +68,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz
-          asset_name: i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz
+          asset_path: src/i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz
+          asset_name: src/i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz
           asset_content_type: application/tar+gzip
 
       - name: Deploy Ansible collection to Galaxy
-        run: ansible-galaxy collection publish i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz --api-key ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
+        run: |
+          ansible-galaxy collection publish src/i2btech-ops-${{ steps.cversion.outputs.version }}.tar.gz --api-key ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
