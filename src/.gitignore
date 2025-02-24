@@ -1,12 +1,9 @@
-*.bak
-
 # These are some examples of commonly ignored file patterns.
 # You should customize this list as applicable to your project.
 # Learn more about .gitignore:
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
-pb-repo*.yml
-ansi-venv
+tests/vars/gws.yml
 *.tar.gz
 
 # Node artifact files

@@ -1,0 +1,65 @@
+---
+gws_users:
+  - mail: user.name@i2btech.com
+    full_name: "User Name"
+    first_name: "User"
+    last_name: "Name"
+    password: "__super_secret__"
+    title: "Consultor"
+    signature: "chile"
+    phone: "555 55555"
+  - mail: other.user@i2btech.com
+    full_name: "Other User"
+    first_name: "Other"
+    last_name: "User"
+    password: "__super_secret__"
+    title: "Consultor"
+    signature: "colombia"
+
+gws_groups:
+  - mail: group.users@i2btech.com
+    name: "Groups Name"
+    description: "This is Groups Name"
+    type: public
+    members:
+      - user.name@i2btech.com
+  - mail: other.group@i2btech.com
+    name: "Other Group"
+    description: "This is Other Group"
+    type: private
+    members:
+      - user.name@i2btech.com
+      - other.user@i2btech.com
+
+gws_group_types:
+  - name: external # anyone in and outside the organization
+    settings:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
+        whoCanPostMessage: "ANYONE_CAN_POST"
+        # messageModerationLevel: "MODERATE_NON_MEMBERS" # recomendación de la doc
+  - name: private # only group members
+    settings:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_MEMBERS_CAN_VIEW"
+        whoCanPostMessage: "ALL_MEMBERS_CAN_POST"
+  - name: public # anyone in the organization
+    settings:
+      - whoCanJoin: "INVITED_CAN_JOIN"
+        whoCanAdd: "ALL_MANAGERS_CAN_ADD"
+        whoCanInvite: "ALL_MANAGERS_CAN_INVITE"
+        whoCanViewMembership: "ALL_MEMBERS_CAN_VIEW"
+        allowExternalMembers: 'false'
+        whoCanContactOwner: "ALL_IN_DOMAIN_CAN_CONTACT"
+        whoCanViewGroup: "ALL_IN_DOMAIN_CAN_VIEW"
+        whoCanPostMessage: "ALL_IN_DOMAIN_CAN_POST"
