@@ -3,6 +3,7 @@
 ## TODO
 
 - Use dynamic credentials for service account
+- Add [action plugin](https://docs.ansible.com/ansible/latest/plugins/action.html#action-plugins) to create credential file from content of variable and deleted after execution?
 
 ## Links
 
