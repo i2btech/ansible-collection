@@ -59,7 +59,16 @@ class GoogleWorkspaceGroupHelper:
             scopes=target_scopes)
         service = build("groupssettings", "v1", credentials=credentials)
 
-        for group in self.module.params['groups']:
+        # check if special keyword exists
+        # in this case we check all the groups
+        action_groups = self.module.params['groups'] if "groups" in self.module.params else []
+        if "ALL" in action_groups:
+            action_groups = []
+            all_groups_definition = self.module.params['groups_definition'] if "groups_definition" in self.module.params else []
+            for group in all_groups_definition:
+                action_groups.append(group["mail"])
+
+        for group in action_groups:
             group_definition = next((sub for sub in self.module.params['groups_definition'] if sub['mail'] == group), None)
             if group_definition is None:
                 result["failed"] = True
@@ -74,17 +83,24 @@ class GoogleWorkspaceGroupHelper:
 
             settings_definition = types_definition["settings"][0]
             settings_current = self.get_settings(service, group)
+
             if settings_definition != settings_current:
                 result["failed"] = True
                 settings = {
+                    "group": group,
+                    "status": "NOT_MATCH",
                     "current": settings_current,
                     "definition": settings_definition
                 }
                 result["message"].append(settings)
             else:
-                result["message"] = "Definition and current settings match"
+                settings = {
+                    "group": group,
+                    "status": "MATCH"
+                }
+                result["message"].append(settings)
 
-            return result
+        return result
 
 
     def get_settings(self, service, group):

@@ -18,6 +18,7 @@
         groups_types: "{{ gws_group_types }}"
         groups:
           - group.users@i2btech.com
+          # - ALL # you can use this to check all the groups
       tags: check
 
     - name: Test create/update action
