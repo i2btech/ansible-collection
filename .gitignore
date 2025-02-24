@@ -1,2 +1,4 @@
 .ansible
 .env
+credential.json
+*.bak

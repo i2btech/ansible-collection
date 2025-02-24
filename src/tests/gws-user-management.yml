@@ -1,0 +1,44 @@
+- name: "Create/Update/Signout/Set signature for users/groups in Google Workspace"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    # create this file using vars/gws.sample.yml as base
+    - vars/gws.yml
+
+  tasks:
+
+    - name: Test action signout
+      i2btech.ops.gws_user_management:
+        action: "signout"
+        used_by: "admin@i2btech.com"
+        users:
+          - "user@i2btech.com"
+        groups:
+          - "group@i2btech.com"
+      tags: signout
+
+    - name: Test action signature
+      i2btech.ops.gws_user_management:
+        action: "signature"
+        users_definition: "{{ gws_users }}"
+        groups_definition: "{{ gws_groups }}"
+        signature_folder: "{{ playbook_dir }}/templates/signatures"
+        users:
+          - "user.name@i2btech.com"
+        groups:
+          - "group.users@i2btech.com"
+      tags: signature
+
+    - name: Test action create_update
+      i2btech.ops.gws_user_management:
+        action: "create_update"
+        users_definition: "{{ gws_users }}"
+        groups_definition: "{{ gws_groups }}"
+        used_by: "admin@i2btech.com"
+        users:
+          - "user.name@i2btech.com"
+      tags: create_update
