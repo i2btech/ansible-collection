@@ -4,6 +4,7 @@
 
 - Use dynamic credentials for service account
 - Add [action plugin](https://docs.ansible.com/ansible/latest/plugins/action.html#action-plugins) to create credential file from content of variable and deleted after execution?
+- Add module to [get config](https://bitbucket.org/i2b/i2btech-workspace-admin/commits/d9de6efbba70ed82cfcbe3e85c39252d918e2da5) of current groups from API
 
 ## Links
 
