@@ -32,9 +32,7 @@ class GoogleWorkspaceGroupHelper:
         )
         members = results.get("members", [])
         user_list = []
-        if not members:
-            user_list = [None]
-        else:
+        if len(members) > 1:
             for member in members:
                 user_list.append(member['email'])
 
