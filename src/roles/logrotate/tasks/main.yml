@@ -1,0 +1,42 @@
+---
+- name: Get timestamp
+  set_fact:
+    timestamp: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  
+- name: "Ensures rotated directory exists"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ logrotate_location }}"
+
+- name: "Ensures logrotate config exists"
+  template:
+    src: "logrotate.j2.conf"
+    dest: "{{ logrotate_conf }}"
+    mode: 0644
+
+- name: "Ensures postrotate script exists"
+  template:
+    src: "{{ postscript }}"
+    dest: "{{ logrotate_postscript }}"
+    mode: 0755
+  when: postscript is defined
+
+- debug:
+    msg: "{{ s3_bucket }}"
+
+- name: "Rotate logs"
+  command: "logrotate -f {{ logrotate_conf }}"
+
+- name: "Upload files to Bucket"
+  shell: |
+    /usr/local/bin/aws s3 sync {{ logrotate_location }}/ s3://{{ s3_bucket }}/{{ s3_prefix}}/{{ host }}
+  when: s3_bucket is defined
+
+- name: "Delete logrotate olddir"
+  file:
+    path: "{{ logrotate_location }}"
+    state: absent
+  when: s3_bucket is defined

@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: IT
+  company: "I2B"
+  platforms:
+  - name: EL
+    versions:
+    - all
+  - name: Debian
+    versions:
+    - all

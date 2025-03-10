@@ -43,3 +43,12 @@ ansible-playbook gws-user-management.yml -t create_update
 ansible-playbook gws-group-management.yml -t check
 ansible-playbook gws-group-management.yml -t create_update
 ```
+
+## Log rotate
+
+create dummy files to be rotated
+
+```
+mkdir -p /tmp/logs/
+cp /var/log/*.log /tmp/logs/
+```

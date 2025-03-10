@@ -8,8 +8,13 @@ RUN \
     python3 \
     python3-pip \
     git \
+    curl \
     openssh-client \
+    mariadb-client \
     ca-certificates \
+    logrotate \
+    sudo \
+    zip \
     unzip && \
   apt clean && \
   apt autoremove --purge
@@ -17,6 +22,17 @@ RUN \
 RUN \
     mkdir -p /home/ubuntu/.vscode-server/extensions && \
     chown -R ubuntu:ubuntu /home/ubuntu/.vscode-server
+
+RUN \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+  unzip -qq awscliv2.zip && \
+  ./aws/install && \
+  rm -rf ./aws && \
+  rm -rf awscliv2.zip
+
+RUN \
+  echo "ubuntu   ALL=(ALL:ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/ubuntu > /dev/null && \
+  chmod 440 /etc/sudoers.d/ubuntu
 
 USER ubuntu
 
