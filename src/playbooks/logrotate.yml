@@ -1,0 +1,15 @@
+- name: "Rotate logs"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: true
+
+  roles:
+
+    - role: i2btech.ops.logrotate
+      host: "{{ host }}"
+      service: "{{ service }}"
+      logs_directory: "{{ logs_directory }}"
+      logs_files: "{{ logs_files }}"
+      s3_bucket: "{{ s3_bucket }}"
+      s3_prefix: "{{ s3_prefix }}"
