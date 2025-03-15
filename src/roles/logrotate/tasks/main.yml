@@ -1,39 +1,44 @@
 ---
 - name: Get timestamp
-  set_fact:
-    timestamp: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
-  
+  ansible.builtin.set_fact:
+    timestamp: "{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
+
 - name: "Ensures rotated directory exists"
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: 0755
+    mode: "0755"
   with_items:
     - "{{ logrotate_location }}"
 
 - name: "Ensures logrotate config exists"
-  template:
+  ansible.builtin.template:
     src: "logrotate.j2.conf"
     dest: "{{ logrotate_conf }}"
-    mode: 0644
+    mode: "0644"
 
 - name: "Ensures postrotate script exists"
-  template:
+  ansible.builtin.template:
     src: "{{ postscript }}"
     dest: "{{ logrotate_postscript }}"
-    mode: 0755
+    mode: "0755"
   when: postscript is defined
 
 - name: "Rotate logs"
-  command: "logrotate -f {{ logrotate_conf }}"
+  ansible.builtin.command: "logrotate -f {{ logrotate_conf }}"
+  register: my_output
+  changed_when: my_output.rc == 0
 
 - name: "Upload files to Bucket"
-  shell: |
-    /usr/local/bin/aws s3 sync {{ logrotate_location }}/ s3://{{ s3_bucket }}/{{ s3_prefix}}/{{ host }}
+  community.aws.s3_sync:
+    bucket: "{{ s3_bucket }}"
+    key_prefix: "{{ s3_prefix }}/{{ host }}"
+    file_root: "{{ logrotate_location }}/"
   when: s3_bucket is defined
+  become: false
 
 - name: "Delete logrotate olddir"
-  file:
+  ansible.builtin.file:
     path: "{{ logrotate_location }}"
     state: absent
   when: s3_bucket is defined

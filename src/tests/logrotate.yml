@@ -15,4 +15,4 @@
         - "bootstrap.log"
         - "dpkg.log"
       s3_bucket: "i2btech-core-prd-logsrotate"
-      s3_prefix: "frontend/nginx"
+      s3_prefix: "collection-testing/system"

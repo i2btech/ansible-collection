@@ -3,3 +3,4 @@ ansible-lint
 pylint
 google-api-python-client
 jinja2
+boto3

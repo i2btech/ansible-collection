@@ -24,23 +24,19 @@ RUN \
     chown -R ubuntu:ubuntu /home/ubuntu/.vscode-server
 
 RUN \
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-  unzip -qq awscliv2.zip && \
-  ./aws/install && \
-  rm -rf ./aws && \
-  rm -rf awscliv2.zip
-
-RUN \
   echo "ubuntu   ALL=(ALL:ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/ubuntu > /dev/null && \
   chmod 440 /etc/sudoers.d/ubuntu
 
 USER ubuntu
 
-COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
 COPY ../src/requirements.txt /home/ubuntu/requirements.txt
+COPY ../src/requirements-gallaxy.yml /home/ubuntu/requirements-gallaxy.yml
 RUN \
   pip3 -q install -r /home/ubuntu/requirements.txt --break-system-packages --no-warn-script-location && \
-  pip3 cache purge
+  pip3 cache purge && \
+  /home/ubuntu/.local/bin/ansible-galaxy install -r /home/ubuntu/requirements-gallaxy.yml
+
+COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
 
 WORKDIR /workspace/src
 ENTRYPOINT ["/home/ubuntu/start.sh"]
