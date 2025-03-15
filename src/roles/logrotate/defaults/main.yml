@@ -1,0 +1,7 @@
+---
+logrotate_su_user: root
+logrotate_dateext: "-%Y-%m-%d-%s"
+logrotate_keep_for: 60 # logs are rotated this many times before deleted
+logrotate_conf: "{{ logs_directory }}/rotate/logrotate.conf"
+logrotate_postscript: "{{ logs_directory }}/rotate/logrotate-postscript.sh"
+logrotate_location: "{{ logs_directory }}/rotate/logs"
