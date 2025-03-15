@@ -19,6 +19,14 @@ Now you can start the devcontainer.
 - [Bitbucket](src/README.bitbucket.md)
 - [Google Workspace](src/README.gws.md)
 
+# Roles
+
+- logrotate
+
+# Playbooks
+
+- [logrotate](src/README.playbooks.md#logrotate)
+
 # TODO
 
 - Add [ansible-test](https://www.ansible.com/blog/introduction-to-ansible-test)
