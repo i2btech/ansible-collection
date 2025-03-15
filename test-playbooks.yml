@@ -1,0 +1,9 @@
+services:
+  logrotate:
+    image: i2btech/ansible-collection:playbooks
+    hostname: playbooks
+    env_file: .devcontainer/.env
+    command:
+        - i2btech.ops.logrotate
+        - --extra-vars
+        - '{"version":"1.23.45","other_variable":"foo"}'
