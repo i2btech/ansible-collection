@@ -6,4 +6,6 @@ services:
     command:
         - i2btech.ops.logrotate
         - --extra-vars
-        - '{"version":"1.23.45","other_variable":"foo"}'
+        - '{"host":"worker","service":"system","logs_directory":"/var/log","logs_files":["alternatives.log","bootstrap.log","dpkg.log"],"s3_bucket":"i2btech-core-prd-logsrotate","s3_prefix":"collection-testing/system"}'
+    volumes:
+      - $HOME/.aws:/home/ubuntu/.aws
