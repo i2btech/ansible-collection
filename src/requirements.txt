@@ -4,3 +4,4 @@ pylint
 google-api-python-client
 jinja2
 boto3
+PyMySQL

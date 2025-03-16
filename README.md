@@ -26,6 +26,7 @@ Now you can start the devcontainer.
 # Playbooks
 
 - [logrotate](src/README.playbooks.md#logrotate)
+- [sqlbackup](src/README.playbooks.md#sqlbackup)
 
 # Dockerhub
 
@@ -42,6 +43,9 @@ Then, you need to use docker compose to run the test(s):
 ```
 # logrotate
 docker compose -f test-playbooks.yml up logrotate
+
+# sqlbackup
+docker compose -f test-playbooks.yml up sqlbackup
 ```
 
 # TODO

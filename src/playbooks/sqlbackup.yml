@@ -1,0 +1,59 @@
+- name: "Backup DB"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars:
+    backup_dir: "/tmp/backup-database"
+
+  tasks:
+
+    - name: Set timestamp
+      ansible.builtin.set_fact:
+        timestamp: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+        sql_pass: "{{ lookup('ansible.builtin.env', 'SQL_PASS') }}"
+      changed_when: false
+
+    - name: Ensures backup directories exists
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      with_items:
+        - "{{ backup_dir }}/tmp"
+        - "{{ backup_dir }}/final"
+
+    - name: Dump databases
+      community.mysql.mysql_db:
+        state: dump
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_user }}"
+        login_password: "{{ sql_pass }}"
+        name: "{{ item }}"
+        target: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
+        dump_extra_args: --routines --no-autocommit --single-transaction --opt
+      with_items: "{{ sql_dbs }}"
+
+    - name: Create a zip archive from dumps
+      community.general.archive:
+        path: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
+        dest: "{{ backup_dir }}/final/{{ item }}-{{ timestamp }}.zip"
+        format: zip
+        mode: "0644"
+      with_items: "{{ sql_dbs }}"
+
+    - name: Create a latest zip from dumps
+      ansible.builtin.copy:
+        src: "{{ backup_dir }}/final/{{ item }}-{{ timestamp }}.zip"
+        dest: "{{ backup_dir }}/final/{{ item }}-latest.zip"
+        remote_src: false
+        mode: "0644"
+      with_items: "{{ sql_dbs }}"
+
+    - name: "Upload files to Bucket"
+      community.aws.s3_sync:
+        bucket: "{{ s3_bucket }}"
+        key_prefix: "{{ s3_prefix }}/"
+        file_root: "{{ backup_dir }}/final/"
+      when: s3_bucket is defined
