@@ -43,6 +43,9 @@ Then, you need to use docker compose to run the test(s):
 ```
 # logrotate
 docker compose -f test-playbooks.yml up logrotate
+
+# sqlbackup
+docker compose -f test-playbooks.yml up sqlbackup
 ```
 
 # TODO

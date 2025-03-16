@@ -9,3 +9,13 @@ services:
         - '{"host":"worker","service":"system","logs_directory":"/var/log","logs_files":["alternatives.log","bootstrap.log","dpkg.log"],"s3_bucket":"i2btech-core-prd-logsrotate","s3_prefix":"collection-testing/system"}'
     volumes:
       - $HOME/.aws:/home/ubuntu/.aws
+  sqlbackup:
+    image: i2btech/ansible-collection:playbooks
+    hostname: playbooks
+    env_file: .devcontainer/.env
+    command:
+        - i2btech.ops.sqlbackup
+        - --extra-vars
+        - '{"sql_host":"i2btech-core-prd-i2bwebngprd.cmvnulshhnnh.us-east-1.rds.amazonaws.com","sql_user":"i2bwebngprd_user","sql_dbs":["i2bwebngprd"],"s3_bucket":"i2btech-core-prd-logsrotate","s3_prefix":"sqlbackup"}'
+    volumes:
+      - $HOME/.aws:/home/ubuntu/.aws
