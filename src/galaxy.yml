@@ -8,7 +8,7 @@ namespace: i2btech
 name: ops
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 2.3.3
+version: 2.3.4
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -21,7 +21,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Modules to manage operational services of I2B (Bitbucket Cloud, Google Workspace, etc)
+description: Resources to manage operational services of I2B (Bitbucket Cloud, Google Workspace, etc)
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
