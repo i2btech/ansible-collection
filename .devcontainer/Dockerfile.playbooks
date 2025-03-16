@@ -1,0 +1,8 @@
+FROM ansible-collection-base
+
+USER ubuntu
+
+RUN /home/ubuntu/.local/bin/ansible-galaxy collection install i2btech.ops
+
+WORKDIR /workspace/src
+ENTRYPOINT ["/home/ubuntu/.local/bin/ansible-playbook"]

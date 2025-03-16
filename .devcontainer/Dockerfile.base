@@ -30,13 +30,6 @@ RUN \
 USER ubuntu
 
 COPY ../src/requirements.txt /home/ubuntu/requirements.txt
-COPY ../src/requirements-gallaxy.yml /home/ubuntu/requirements-gallaxy.yml
 RUN \
   pip3 -q install -r /home/ubuntu/requirements.txt --break-system-packages --no-warn-script-location && \
-  pip3 cache purge && \
-  /home/ubuntu/.local/bin/ansible-galaxy install -r /home/ubuntu/requirements-gallaxy.yml
-
-COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
-
-WORKDIR /workspace/src
-ENTRYPOINT ["/home/ubuntu/start.sh"]
+  pip3 cache purge

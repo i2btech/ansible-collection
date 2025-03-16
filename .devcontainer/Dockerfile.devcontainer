@@ -1,0 +1,11 @@
+FROM ansible-collection-base
+
+USER ubuntu
+
+COPY ../src/requirements-gallaxy.yml /home/ubuntu/requirements-gallaxy.yml
+RUN /home/ubuntu/.local/bin/ansible-galaxy install -r /home/ubuntu/requirements-gallaxy.yml
+
+COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
+
+WORKDIR /workspace/src
+ENTRYPOINT ["/home/ubuntu/start.sh"]
