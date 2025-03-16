@@ -5,54 +5,55 @@
   become: false
 
   vars:
-    rdsbackup_devops_backups: "/tmp/backup-database"
+    backup_dir: "/tmp/backup-database"
 
   tasks:
 
     - name: Set timestamp
-      set_fact:
-        timestamp: "{{ lookup('pipe','date +%Y%m%d-%H%M%S') }}"
+      ansible.builtin.set_fact:
+        timestamp: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
+        sql_pass: "{{ lookup('ansible.builtin.env', 'SQL_PASS') }}"
       changed_when: false
 
-    - name: Ensures backup directory exists
-      file:
-        path: "{{ rdsbackup_devops_backups }}"
+    - name: Ensures backup directories exists
+      ansible.builtin.file:
+        path: "{{ item }}"
         state: directory
-        mode: 0755
+        mode: "0755"
+      with_items:
+        - "{{ backup_dir }}/tmp"
+        - "{{ backup_dir }}/final"
 
     - name: Dump databases
       community.mysql.mysql_db:
         state: dump
-        login_host: "{{ rdsbackup_address }}"
-        login_user: "{{ rdsbackup_user_name }}"
-        login_password: "{{ rdsbackup_user_pass }}"
+        login_host: "{{ sql_host }}"
+        login_user: "{{ sql_user }}"
+        login_password: "{{ sql_pass }}"
         name: "{{ item }}"
-        target: "{{ rdsbackup_devops_backups }}/{{ item }}-{{ timestamp }}.sql"
+        target: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
         dump_extra_args: --routines --no-autocommit --single-transaction --opt
-      with_items: "{{ rdsbackup_dump_list }}"
+      with_items: "{{ sql_dbs }}"
 
     - name: Create a zip archive from dumps
-      archive:
-        path: "{{ rdsbackup_devops_backups }}/{{ item }}-{{ timestamp }}.sql"
-        dest: "{{ rdsbackup_devops_backups }}/{{ item }}-{{ timestamp }}.zip"
+      community.general.archive:
+        path: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
+        dest: "{{ backup_dir }}/final/{{ item }}-{{ timestamp }}.zip"
         format: zip
-      with_items: "{{ rdsbackup_dump_list }}"
+        mode: "0644"
+      with_items: "{{ sql_dbs }}"
 
-    - name: Create a latest zip copy from dumps
-      copy:
-        src: "{{ rdsbackup_devops_backups }}/{{ item }}-{{ timestamp }}.zip"
-        dest: "{{ rdsbackup_devops_backups }}/{{ item }}-latest.zip"
+    - name: Create a latest zip from dumps
+      ansible.builtin.copy:
+        src: "{{ backup_dir }}/final/{{ item }}-{{ timestamp }}.zip"
+        dest: "{{ backup_dir }}/final/{{ item }}-latest.zip"
         remote_src: false
-      with_items: "{{ rdsbackup_dump_list }}"
-
-    - name: Sets complete list of dumps to upload
-      set_fact:
-        dump_list_to_upload: "{{ rdsbackup_dump_list | product([timestamp, 'latest']) | map('join', '-') | list }}"
-      changed_when: false
+        mode: "0644"
+      with_items: "{{ sql_dbs }}"
 
     - name: "Upload files to Bucket"
       community.aws.s3_sync:
-        bucket: "{{ rdsbackup_s3_backup }}"
-        key_prefix: "/"
-        file_root: "{{ rdsbackup_devops_backups }}/"
-      when: rdsbackup_s3_backup is defined
+        bucket: "{{ s3_bucket }}"
+        key_prefix: "{{ s3_prefix }}/"
+        file_root: "{{ backup_dir }}/final/"
+      when: s3_bucket is defined

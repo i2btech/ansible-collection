@@ -26,6 +26,7 @@ Now you can start the devcontainer.
 # Playbooks
 
 - [logrotate](src/README.playbooks.md#logrotate)
+- [sqlbackup](src/README.playbooks.md#sqlbackup)
 
 # Dockerhub
 
