@@ -13,7 +13,7 @@ Role Variables
 
 - `host`: Hostname where the role is executed. This is used to separate logs when multiple hosts are used.
 - `service`: Service name which logs are rotated.
-- `logs_files`: List of file names to be rotated.
+- `logs_files_to_process`: List of file names to be rotated.
 - `logs_directory`: Directory where logs are located.
 - `postscript`: Script executed after rotation of logs, is called by LogRotate using sh not bash.
 - `logrotate_data`: Directory where old logs are stored. Default `{{ logs_directory }}/rotate/logs`

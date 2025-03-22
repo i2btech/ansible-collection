@@ -9,10 +9,11 @@
 
   tasks:
 
-    - name: Set timestamp
+    - name: Set facts
       ansible.builtin.set_fact:
         timestamp: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
         sql_pass: "{{ lookup('ansible.builtin.env', 'SQL_PASS') }}"
+        sql_dbs_list: "{{ sql_dbs.split(',') | list }}"
       changed_when: false
 
     - name: Ensures backup directories exists
@@ -33,7 +34,7 @@
         name: "{{ item }}"
         target: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
         dump_extra_args: --routines --no-autocommit --single-transaction --opt
-      with_items: "{{ sql_dbs }}"
+      with_items: "{{ sql_dbs_list }}"
 
     - name: Create a zip archive from dumps
       community.general.archive:
@@ -41,7 +42,7 @@
         dest: "{{ backup_dir }}/final/{{ item }}-{{ timestamp }}.zip"
         format: zip
         mode: "0644"
-      with_items: "{{ sql_dbs }}"
+      with_items: "{{ sql_dbs_list }}"
 
     - name: Create a latest zip from dumps
       ansible.builtin.copy:
@@ -49,7 +50,7 @@
         dest: "{{ backup_dir }}/final/{{ item }}-latest.zip"
         remote_src: false
         mode: "0644"
-      with_items: "{{ sql_dbs }}"
+      with_items: "{{ sql_dbs_list }}"
 
     - name: "Upload files to Bucket"
       community.aws.s3_sync:

@@ -4,12 +4,19 @@
   gather_facts: false
   become: true
 
+  pre_tasks:
+
+    - name: Set facts
+      ansible.builtin.set_fact:
+        logs_files_list: "{{ logs_files.split(',') | list }}"
+      changed_when: false
+
   roles:
 
     - role: i2btech.ops.logrotate
       host: "{{ host }}"
       service: "{{ service }}"
       logs_directory: "{{ logs_directory }}"
-      logs_files: "{{ logs_files }}"
+      logs_files_to_process: "{{ logs_files_list }}"
       s3_bucket: "{{ s3_bucket }}"
       s3_prefix: "{{ s3_prefix }}"
