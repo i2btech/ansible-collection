@@ -49,6 +49,7 @@ ansible-playbook gws-group-management.yml -t create_update
 create dummy files to be rotated
 
 ```
-mkdir -p /tmp/logs/
-sudo cp /var/log/*.log /tmp/logs/
+mkdir -p /tmp/logs1 && mkdir -p /tmp/logs2
+sudo cp /var/log/*.log /tmp/logs1/
+sudo cp /var/log/*.log /tmp/logs2/
 ```

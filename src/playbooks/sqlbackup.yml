@@ -55,6 +55,6 @@
     - name: "Upload files to Bucket"
       community.aws.s3_sync:
         bucket: "{{ s3_bucket }}"
-        key_prefix: "{{ s3_prefix | default('') }}/"
+        key_prefix: "{{ s3_prefix | default('') }}"
         file_root: "{{ backup_dir }}/final/"
       when: s3_bucket is defined
