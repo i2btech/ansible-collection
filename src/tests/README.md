@@ -50,6 +50,5 @@ create dummy files to be rotated
 
 ```
 mkdir -p /tmp/logs1 && mkdir -p /tmp/logs2
-sudo cp /var/log/*.log /tmp/logs1/
-sudo cp /var/log/*.log /tmp/logs2/
+sudo cp /var/log/*.log /tmp/logs1/ && sudo cp /var/log/*.log /tmp/logs2/
 ```

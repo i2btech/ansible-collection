@@ -24,12 +24,12 @@
 
 - name: "Upload files to Bucket"
   community.aws.s3_sync:
-    bucket: "{{ s3_bucket }}"
+    bucket: "{{ s3_bucket_upload }}"
     key_prefix: "{{ service }}/{{ host }}/{{ item | replace('/', '_') }}"
     file_root: "{{ logrotate_root }}/{{ item | replace('/', '_') }}"
   with_items:
     - "{{ logs_directories_list }}"
-  when: s3_bucket is defined
+  when: s3_bucket_upload != ""
   become: false
 
 - name: "Delete logrotate olddir"
@@ -38,4 +38,11 @@
     state: absent
   with_items:
     - "{{ logs_directories_list }}"
-  when: s3_bucket is defined
+  when: s3_bucket_upload != ""
+
+- name: Delete original logs
+  ansible.builtin.include_tasks:
+    file: delete_files.yml
+  with_items:
+    - "{{ logs_directories_list }}"
+  when: logrotate_delete_files_after_rotate == "TRUE"

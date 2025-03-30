@@ -17,4 +17,5 @@
       host: "{{ lookup('ansible.builtin.file', '/etc/hostname') }}"
       service: "{{ service }}"
       logs_directories_list: "{{ logs_directories_tmp }}"
-      s3_bucket: "{{ s3_bucket }}"
+      s3_bucket_upload: "{{ s3_bucket | default('') }}"
+      logrotate_delete_files_after_rotate: "{{ delete_files | default('FALSE') }}"

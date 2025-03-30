@@ -17,7 +17,8 @@ Role Variables
 - `service`: Service name which logs are rotated.
 - `logs_directories_list`: Directory where logs are located.
 - `logrotate_keep_for`: Number of old logs files that we keep before delete them. Default `60`
-- `s3_bucket`: String, bucket name where files will be uploaded. If this value is not defined the rotated files will not be uploaded to S3 and not be deleted of the host.
+- `s3_bucket_upload`: String, bucket name where files will be uploaded. If this value is not defined the rotated files will not be uploaded to S3 and not be deleted of the host.
+- `logrotate_delete_files_after_rotate`: String, if TRUE delete logs files after rotate. Default `FALSE`
 
 Dependencies
 ------------
@@ -37,7 +38,8 @@ Rotate logs and upload to S3
       service: "nginx"
       logs_directories_list:
         - "/devops/data/nginx/logs"
-      s3_bucket: "{{ doid }}-logsrotate"
+      s3_bucket_upload: "{{ doid }}-logsrotate"
+      logrotate_delete_files_after_rotate: "TRUE"
 ```
 
 License
