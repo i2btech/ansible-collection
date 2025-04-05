@@ -5,24 +5,17 @@
 
 - name: "Ensures rotated directory exists"
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ logrotate_root }}/{{ item | replace('/', '_') }}"
     state: directory
     mode: "0755"
   with_items:
-    - "{{ logrotate_location }}"
+    - "{{ logs_directories_list }}"
 
 - name: "Ensures logrotate config exists"
   ansible.builtin.template:
     src: "logrotate.j2.conf"
     dest: "{{ logrotate_conf }}"
     mode: "0644"
-
-- name: "Ensures postrotate script exists"
-  ansible.builtin.template:
-    src: "{{ postscript }}"
-    dest: "{{ logrotate_postscript }}"
-    mode: "0755"
-  when: postscript is defined
 
 - name: "Rotate logs"
   ansible.builtin.command: "logrotate -f {{ logrotate_conf }}"
@@ -31,14 +24,25 @@
 
 - name: "Upload files to Bucket"
   community.aws.s3_sync:
-    bucket: "{{ s3_bucket }}"
-    key_prefix: "{{ s3_prefix }}/{{ host }}"
-    file_root: "{{ logrotate_location }}/"
-  when: s3_bucket is defined
+    bucket: "{{ s3_bucket_upload }}"
+    key_prefix: "{{ service }}/{{ host }}/{{ item | replace('/', '_') }}"
+    file_root: "{{ logrotate_root }}/{{ item | replace('/', '_') }}"
+  with_items:
+    - "{{ logs_directories_list }}"
+  when: s3_bucket_upload != ""
   become: false
 
 - name: "Delete logrotate olddir"
   ansible.builtin.file:
-    path: "{{ logrotate_location }}"
+    path: "{{ logrotate_root }}/{{ item | replace('/', '_') }}"
     state: absent
-  when: s3_bucket is defined
+  with_items:
+    - "{{ logs_directories_list }}"
+  when: s3_bucket_upload != ""
+
+- name: Delete original logs
+  ansible.builtin.include_tasks:
+    file: delete_files.yml
+  with_items:
+    - "{{ logs_directories_list }}"
+  when: logrotate_delete_files_after_rotate == "TRUE"

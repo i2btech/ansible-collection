@@ -1,0 +1,15 @@
+---
+- name: Locating all files in dir
+  ansible.builtin.find:
+    path: "{{ item }}"
+    file_type: file
+  register: cleanup
+  ignore_errors: true
+
+- name: Removing all files previously found in files dir
+  ansible.builtin.file:
+    path: "{{ inner_item.path }}"
+    state: absent
+  with_items: "{{ cleanup.files }}"
+  loop_control:
+    loop_var: inner_item
