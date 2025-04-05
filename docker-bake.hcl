@@ -1,3 +1,7 @@
+variable "TAG" {
+  default = "latest"
+}
+
 group "devcontainer" {
   targets = ["base", "devcontainer"]
 }
@@ -21,7 +25,7 @@ target "devcontainer" {
 
 target "playbooks" {
   dockerfile = ".devcontainer/Dockerfile.playbooks"
-  tags = ["i2btech/ansible-collection:playbooks"]
+  tags = ["i2btech/ansible-collection:${TAG}"]
   contexts = {
     ansible-collection-base = "target:base"
   }
