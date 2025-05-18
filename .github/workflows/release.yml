@@ -81,6 +81,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # TODO: set environment variable "TAG" with value equal to "steps.cversion.outputs.version"
       - name: Build and push
         uses: docker/bake-action@v2
         with:
@@ -88,5 +89,5 @@ jobs:
             ./docker-bake.hcl
           targets: playbooks
           push: true
-          set: |
-            *.tags=i2btech/ansible-collection:${{ steps.cversion.outputs.version }}
+          #set: |
+          #  *.tags=i2btech/ansible-collection:${{ steps.cversion.outputs.version }}

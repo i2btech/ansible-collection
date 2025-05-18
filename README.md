@@ -48,8 +48,17 @@ docker compose -f test-playbooks.yml up logrotate
 docker compose -f test-playbooks.yml up sqlbackup
 ```
 
+## Build and release to Ansible Galaxy and Dockerhub from local
+
+You need to have at hand the values for secrets `ANSIBLE_GALAXY_API_KEY` and `DOCKER_LOGIN_PASS`
+
+```
+./build_release_local.sh
+```
+
 # TODO
 
+- set environment variable "TAG" with value equal to "steps.cversion.outputs.version" in release workflow
 - Add [ansible-test](https://www.ansible.com/blog/introduction-to-ansible-test)
 
 # Links
