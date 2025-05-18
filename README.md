@@ -60,6 +60,7 @@ You need to have at hand the values for secrets `ANSIBLE_GALAXY_API_KEY` and `DO
 
 - set environment variable "TAG" with value equal to "steps.cversion.outputs.version" in release workflow
 - Add [ansible-test](https://www.ansible.com/blog/introduction-to-ansible-test)
+- update `test-playbooks.yml`, add dummy files to rotate; see `src/tests/README.md`
 
 # Links
 

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-EXTRA_VARS="sql_host=i2btech-core-prd-i2bwebngprd.cmvnulshhnnh.us-east-1.rds.amazonaws.com \
-  sql_user=i2bwebngprd_user \
-  sql_dbs=i2bwebngprd \
-  s3_bucket=i2btech-core-prd-logsrotate \
-  s3_prefix=sqlbackup"
+export SQL_HOST="i2btech-core-prd-i2bwebngprd.cmvnulshhnnh.us-east-1.rds.amazonaws.com"
+export SQL_USER="i2bwebngprd_user"
+export SQL_DBS="i2bwebngprd"
+export S3_BUCKET="i2btech-core-prd-logsrotate"
+export S3_PREFIX="sqlbackup"
 
-ansible-playbook i2btech.ops.sqlbackup --extra-vars "${EXTRA_VARS}"
+ansible-playbook i2btech.ops.sqlbackup

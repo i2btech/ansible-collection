@@ -5,8 +5,10 @@ services:
     env_file: .devcontainer/.env
     command:
         - i2btech.ops.logrotate
-        - --extra-vars
-        - '{"host":"worker","service":"system","logs_directory":"/var/log","logs_files": "alternatives.log,bootstrap.log,dpkg.log","s3_bucket":"i2btech-core-prd-logsrotate","s3_prefix":"collection-testing/system"}'
+    environment:
+      - SERVICE: "system"
+      - LOGS_DIR: "/tmp/logs1,/tmp/logs2"
+      - S3_BUCKET: "i2btech-core-prd-logsrotate"
     volumes:
       - $HOME/.aws:/home/ubuntu/.aws
   sqlbackup:

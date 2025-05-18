@@ -8,14 +8,16 @@
 
     - name: Set facts
       ansible.builtin.set_fact:
-        logs_directories_tmp: "{{ logs_directories.split(',') | list }}"
+        service_tmp: "{{ lookup('ansible.builtin.env', 'SERVICE') }}"
+        logs_directories_tmp: "{{ lookup('ansible.builtin.env', 'LOGS_DIR').split(',') | list }}"
+        s3_bucket_tmp: "{{ lookup('ansible.builtin.env', 'S3_BUCKET') }}"
       changed_when: false
 
   roles:
 
     - role: i2btech.ops.logrotate
       host: "{{ lookup('ansible.builtin.file', '/etc/hostname') }}"
-      service: "{{ service }}"
+      service: "{{ service_tmp }}"
       logs_directories_list: "{{ logs_directories_tmp }}"
-      s3_bucket_upload: "{{ s3_bucket | default('') }}"
+      s3_bucket_upload: "{{ s3_bucket_tmp | default('') }}"
       logrotate_delete_files_after_rotate: "{{ delete_files | default('FALSE') }}"
