@@ -12,8 +12,12 @@
     - name: Set facts
       ansible.builtin.set_fact:
         timestamp: "{{ lookup('pipe', 'date +%Y%m%d-%H%M%S') }}"
-        sql_pass: "{{ lookup('ansible.builtin.env', 'SQL_PASS') }}"
-        sql_dbs_list: "{{ sql_dbs.split(',') | list }}"
+        sql_host_tmp: "{{ lookup('ansible.builtin.env', 'SQL_HOST') }}"
+        sql_user_tmp: "{{ lookup('ansible.builtin.env', 'SQL_USER') }}"
+        sql_pass_tmp: "{{ lookup('ansible.builtin.env', 'SQL_PASS') }}"
+        sql_dbs_list: "{{ lookup('ansible.builtin.env', 'SQL_DBS').split(',') | list }}"
+        s3_bucket_tmp: "{{ lookup('ansible.builtin.env', 'S3_BUCKET') }}"
+        s3_prefix_tmp: "{{ lookup('ansible.builtin.env', 'S3_PREFIX') }}"
       changed_when: false
 
     - name: Ensures backup directories exists
@@ -28,9 +32,9 @@
     - name: Dump databases
       community.mysql.mysql_db:
         state: dump
-        login_host: "{{ sql_host }}"
-        login_user: "{{ sql_user }}"
-        login_password: "{{ sql_pass }}"
+        login_host: "{{ sql_host_tmp }}"
+        login_user: "{{ sql_user_tmp }}"
+        login_password: "{{ sql_pass_tmp }}"
         name: "{{ item }}"
         target: "{{ backup_dir }}/tmp/{{ item }}-{{ timestamp }}.sql"
         dump_extra_args: --routines --no-autocommit --single-transaction --opt
@@ -54,7 +58,7 @@
 
     - name: "Upload files to Bucket"
       community.aws.s3_sync:
-        bucket: "{{ s3_bucket }}"
-        key_prefix: "{{ s3_prefix | default('') }}"
+        bucket: "{{ s3_bucket_tmp }}"
+        key_prefix: "{{ s3_prefix_tmp | default('') }}"
         file_root: "{{ backup_dir }}/final/"
-      when: s3_bucket is defined
+      when: s3_bucket_tmp is defined
