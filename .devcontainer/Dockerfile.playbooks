@@ -3,6 +3,7 @@ FROM ansible-collection-base
 USER ubuntu
 
 RUN /home/ubuntu/.local/bin/ansible-galaxy collection install i2btech.ops
+COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start_playbooks.sh /home/ubuntu/start.sh
 
 WORKDIR /workspace/src
-ENTRYPOINT ["/home/ubuntu/.local/bin/ansible-playbook"]
+ENTRYPOINT ["/home/ubuntu/start.sh"]

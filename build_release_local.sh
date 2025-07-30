@@ -24,4 +24,4 @@ docker run \
 
 docker buildx bake playbooks # --no-cache
 docker login -u i2btech
-docker push i2btech/ansible-collection:playbooks:${TAG}
+docker push i2btech/ansible-collection:${TAG}

@@ -5,7 +5,7 @@ USER ubuntu
 COPY ../src/requirements-galaxy.yml /home/ubuntu/requirements-galaxy.yml
 RUN /home/ubuntu/.local/bin/ansible-galaxy install -r /home/ubuntu/requirements-galaxy.yml
 
-COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start.sh /home/ubuntu/start.sh
+COPY --chown=ubuntu:ubuntu --chmod=755 .devcontainer/start_devcontainer.sh /home/ubuntu/start.sh
 
 WORKDIR /workspace/src
 ENTRYPOINT ["/home/ubuntu/start.sh"]
