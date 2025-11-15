@@ -30,7 +30,12 @@ options:
             - ...
         type: str
         required: true
-    efs_name:
+    resource_type:
+        description:
+            - ...
+        type: str
+        required: true
+    resource_name:
         description:
             - ...
         type: str
@@ -43,9 +48,10 @@ EXAMPLES = r'''
 - name: "Restore EFS from AWS Backup"
   i2btech.ops.aws_backup_restore:
   aws_region: "us-east-1"
-  vault_name: "redmc-web-bak-efs-secondary"
-  iam_role_restore: "arn:aws:iam::603908928939:role/redmc-web-bak-efs-secondary"
-  efs_name: "i2btech-core-prd-webngci"
+  vault_name: "vault-name"
+  iam_role_restore: "arn:aws:iam::xxx:role/role-name"
+  resource_type: "resource-type"
+  resource_name: "resource-name"
 '''
 
 RETURN = r'''
@@ -71,7 +77,8 @@ def run_module():
         aws_region=dict(type="str", default="us-east-1"),
         vault_name=dict(type="str", required=True),
         iam_role_restore=dict(type="str", required=True),
-        efs_name=dict(type="str", required=True)
+        resource_type=dict(type="str", required=True),
+        resource_name=dict(type="str", required=True)
     )
 
     # seed the result dict in the object
@@ -107,17 +114,32 @@ def run_module():
         "message": []
     }
 
-    existing_resource = restored_resource.get_efs_info()
+    if module.params['resource_type'] == "EFS":
+        existing_resource = restored_resource.get_efs_info()
 
-    # Create a new resource in case it doesn't exist
-    if not existing_resource:
-        result_action = restored_resource.efs_restore()
-        result['message'] = result_action["message"]
-        result['changed'] = result_action["changed"]
-        result['failed'] = result_action["failed"]
-        
+        # Create a new resource in case it doesn't exist
+        if not existing_resource:
+            result_action = restored_resource.efs_restore()
+            result['message'] = result_action["message"]
+            result['changed'] = result_action["changed"]
+            result['failed'] = result_action["failed"]
+            
+        else:
+            result['message'] = "EFS " + module.params['resource_name'] + " exist."
+
+    elif  module.params['resource_type'] == "S3":
+        existing_resource = restored_resource.get_s3_info()
+
+        # Create a new resource in case it doesn't exist
+        if not existing_resource:
+            result['message'] = "S3 created"
+            
+        else:
+            result['message'] = "S3 " + module.params['resource_name'] + " exist."
+
     else:
-        result['message'] = "EFS " + module.params['efs_name'] + " exist."
+        result['failed'] = True
+        result['message'] = "Unknow Resource type: " + module.params['resource_type']
 
     if result is not None:
         module.exit_json(**result)

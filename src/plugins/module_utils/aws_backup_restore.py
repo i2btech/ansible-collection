@@ -34,15 +34,33 @@ class AWSBackupRestoreHelper:
         EFS_EXIST=False
         client_efs = boto3.client('efs', region_name=self.module.params['aws_region'])
 
-        print("Check if Filesystem exists...")
+        # Check if Filesystem exists...
         response = client_efs.describe_file_systems()
         for FS in response["FileSystems"]:
             for tags in FS["Tags"]:
                 if tags["Key"] == 'Name':
-                    if tags["Value"] == self.module.params['efs_name']:
+                    if tags["Value"] == self.module.params['resource_name']:
                         EFS_EXIST=True
 
         return EFS_EXIST
+
+
+    def get_s3_info(self):
+        """
+        Get information of S3
+        """
+
+        BUCKET_EXISTS=False
+        client_s3 = boto3.client('s3', region_name=self.module.params['aws_region'])
+
+        # Check if Bucket  exists...
+        try:
+            client_s3.head_bucket(Bucket=self.module.params['resource_name'])
+            BUCKET_EXISTS=True
+        except ClientError as e:
+            BUCKET_EXISTS=False
+
+        return BUCKET_EXISTS
 
 
     def get_kms_key_id_by_alias(self, alias_name):
@@ -125,7 +143,7 @@ class AWSBackupRestoreHelper:
                     Tags=[
                         {
                             'Key': 'Name',
-                            'Value': self.module.params['efs_name']
+                            'Value': self.module.params['resource_name']
                         },
                     ]
                 )
