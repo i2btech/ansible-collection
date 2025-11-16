@@ -18,6 +18,7 @@ Now you can start the devcontainer.
 
 - [Bitbucket](src/README.bitbucket.md)
 - [Google Workspace](src/README.gws.md)
+- [AWS](src/README.aws.md)
 
 # Roles
 
@@ -28,7 +29,7 @@ Now you can start the devcontainer.
 - [logrotate](src/README.playbooks.md#logrotate)
 - [sqlbackup](src/README.playbooks.md#sqlbackup)
 
-# Dockerhub
+## Dockerhub
 
 We can use a docker image to run the playbooks of the collection.
 
