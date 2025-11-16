@@ -11,7 +11,6 @@ from datetime import datetime
 from ansible_collections.i2btech.ops.plugins.module_utils.file_logger import FileLogger
 import uuid
 import time
-import sys
 
 
 #
@@ -25,7 +24,7 @@ class AWSBackupRestoreHelper:
 
     def __init__(self, module):
         self.module = module
-
+        self.current_date=str(datetime.today().strftime('%Y-%m-%d')) + " 00:00:00"
 
     def get_efs_info(self):
         """
@@ -99,10 +98,11 @@ class AWSBackupRestoreHelper:
             "failed": False,
             "message": []
         }
-        CURRENT_DATE=str(datetime.today().strftime('%Y-%m-%d')) + " 00:00:00"
+
+        logger = FileLogger()
         client_efs = boto3.client('efs', region_name=self.module.params['aws_region'])
 
-        print("Filesystem don't exists, restoring...")
+        logger.info("Filesystem don't exists, restoring...")
         client_backup = boto3.client('backup', region_name=self.module.params['aws_region'])
 
         # Get recovery point EFS...
@@ -110,7 +110,7 @@ class AWSBackupRestoreHelper:
             BackupVaultName=self.module.params['vault_name'],
             MaxResults=1,
             ByResourceType='EFS',
-            ByCreatedAfter=CURRENT_DATE
+            ByCreatedAfter=self.current_date
         )
 
         # Create filesystem from backup...
@@ -139,11 +139,13 @@ class AWSBackupRestoreHelper:
             time.sleep(10)
             force_exit += 1
             status = response_restore_status["Status"] # values: 'PENDING'|'RUNNING'|'COMPLETED'|'ABORTED'|'FAILED'
-            # print("status: " + status + ", " + response_restore_status["PercentDone"])
+            logger.info("status: " + status + ", " + response_restore_status["PercentDone"])
+
             if status == "COMPLETED": 
                 result['changed'] = True
                 result["message"].append("Filesystem created")
-                # Tag new filesystem...
+
+                logger.info("Tag new filesystem...")
                 response_tag = client_efs.tag_resource(
                     ResourceId=response_restore_status["CreatedResourceArn"].split(":")[5].split("/")[1],
                     Tags=[
@@ -166,5 +168,71 @@ class AWSBackupRestoreHelper:
                 result['failed'] = True
                 result["message"].append("The process took to long, force exit...")
                 result["message"].append("Percent done: " + response_restore_status["PercentDone"])
+                break
 
+        logger.close()
+        return result
+
+    def s3_restore(self):
+
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
+        logger = FileLogger()
+        client_backup = boto3.client('backup', region_name=self.module.params['aws_region'])
+
+        logger.info("Get recovery point EFS...")
+        response_get_point = client_backup.list_recovery_points_by_backup_vault(
+            BackupVaultName=self.module.params['vault_name'],
+            MaxResults=1,
+            ByResourceType='S3',
+            ByCreatedAfter=self.current_date
+        )
+        logger.info(response_get_point["RecoveryPoints"][0]["RecoveryPointArn"])
+        logger.info("Create bucket from backup...")
+
+        response_restore_start = client_backup.start_restore_job(
+            RecoveryPointArn=response_get_point["RecoveryPoints"][0]["RecoveryPointArn"],
+            Metadata={
+                "DestinationBucketName": self.module.params['resource_name'],
+                "EncryptionType": "SSE-S3"
+            },
+            IamRoleArn=self.module.params['iam_role_restore'],
+            IdempotencyToken=str(uuid.uuid4()),
+            ResourceType='S3',
+            CopySourceTagsToRestoredResource=False
+        )
+
+        logger.info("Waiting for restoration job to finish...")
+        force_exit=0
+        while True:
+            response_restore_status = client_backup.describe_restore_job(
+                RestoreJobId=response_restore_start["RestoreJobId"]
+            )
+            time.sleep(10)
+            force_exit += 1
+            status = response_restore_status["Status"] # values: 'PENDING'|'RUNNING'|'COMPLETED'|'ABORTED'|'FAILED'
+            logger.info("status: " + status + ", " + response_restore_status["PercentDone"])
+
+            if status == "COMPLETED": 
+                result['changed'] = True
+                result["message"].append("Bucket created")
+                break
+
+            if status == "ABORTED" or status == "FAILED": 
+                result['failed'] = True
+                result["message"].append("Creation of bucket was oborted or failed")
+                result["message"].append(response_restore_status)
+                break
+
+            if force_exit > 60:
+                result['failed'] = True
+                result["message"].append("The process took to long, force exit...")
+                result["message"].append("Percent done: " + response_restore_status["PercentDone"])
+                break
+
+        logger.info(result["message"])
+        logger.close()
         return result

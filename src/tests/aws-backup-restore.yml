@@ -1,0 +1,23 @@
+- name: "Restore AWS Backup"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  tasks:
+
+    - name: "Restore S3 from AWS Backup"
+      i2btech.ops.aws_backup_restore:
+        aws_region: "us-east-1"
+        vault_name: "i2btech-core-prd-webngprd-dbbackup"
+        iam_role_restore: "arn:aws:iam::xxx:role/i2btech-core-prd-webngprd-dbbackup"
+        resource_type: "S3"
+        resource_name: "i2btech-core-prd-webngprd-dbbackup-restored"
+
+    - name: "Restore EFS from AWS Backup"
+      i2btech.ops.aws_backup_restore:
+        aws_region: "us-east-1"
+        vault_name: "i2btech-core-prd-webngprd-efsbackup"
+        iam_role_restore: "arn:aws:iam::xxx:role/i2btech-core-prd-webngprd-efsbackup"
+        resource_type: "S3"
+        resource_name: "i2btech-core-prd-webngprd-efsbackup-restored"

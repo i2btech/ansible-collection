@@ -67,6 +67,7 @@ from ansible_collections.i2btech.ops.plugins.module_utils.aws_backup_restore imp
 from ansible.module_utils.basic import AnsibleModule
 #pylint: disable=wrong-import-position
 
+
 def run_module():
     """ main module """
 
@@ -132,8 +133,11 @@ def run_module():
 
         # Create a new resource in case it doesn't exist
         if not existing_resource:
-            result['message'] = "S3 created"
-            
+            result_action = restored_resource.s3_restore()
+            result['message'] = result_action["message"]
+            result['changed'] = result_action["changed"]
+            result['failed'] = result_action["failed"]
+
         else:
             result['message'] = "S3 " + module.params['resource_name'] + " exist."
 
@@ -146,6 +150,7 @@ def run_module():
     else:
         # in case of an unknown error
         module.exit_json(**result)
+
 
 def main():
     """ main function """
