@@ -8,6 +8,7 @@ __metaclass__ = type
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
+from ansible_collections.i2btech.ops.plugins.module_utils.file_logger import FileLogger
 import uuid
 import time
 import sys
@@ -50,16 +51,21 @@ class AWSBackupRestoreHelper:
         Get information of S3
         """
 
+        logger = FileLogger()
+        logger.info("Check if Bucket  exists...")
+
         BUCKET_EXISTS=False
         client_s3 = boto3.client('s3', region_name=self.module.params['aws_region'])
 
-        # Check if Bucket  exists...
         try:
             client_s3.head_bucket(Bucket=self.module.params['resource_name'])
             BUCKET_EXISTS=True
+            logger.info("Bucket  exists...")
         except ClientError as e:
             BUCKET_EXISTS=False
+            logger.info("Bucket  don't exists...")
 
+        logger.close()
         return BUCKET_EXISTS
 
 
