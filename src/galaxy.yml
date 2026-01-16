@@ -8,7 +8,7 @@ namespace: i2btech
 name: ops
 
 # The version of the collection. Must be compatible with semantic versioning
-version: 2.7.0
+version: 2.8.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -44,6 +44,7 @@ dependencies:
   "community.general": ">=10.4.0"
   "community.aws": ">=9.1.0"
   "community.mysql": ">=3.12.0"
+  "community.postgresql": ">=4.2.0"
 
 # The URL of the originating SCM repository
 repository: https://github.com/i2btech/ansible-collection

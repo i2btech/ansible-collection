@@ -11,6 +11,7 @@ RUN \
     curl \
     openssh-client \
     mariadb-client \
+    postgresql-client \
     ca-certificates \
     logrotate \
     sudo \
