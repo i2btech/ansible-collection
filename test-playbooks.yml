@@ -1,23 +1,26 @@
 services:
   logrotate:
-    image: i2btech/ansible-collection:playbooks
+    image: i2btech/ansible-collection:latest
     hostname: playbooks
     env_file: .devcontainer/.env
     command:
         - i2btech.ops.logrotate
     environment:
-      - SERVICE: "system"
-      - LOGS_DIR: "/tmp/logs1,/tmp/logs2"
-      - S3_BUCKET: "i2btech-core-prd-logsrotate"
+      SERVICE: "system"
+      LOGS_DIR: "/tmp/logs1,/tmp/logs2"
+      S3_BUCKET: "i2btech-core-prd-logsrotate"
     volumes:
       - $HOME/.aws:/home/ubuntu/.aws
   sqlbackup:
-    image: i2btech/ansible-collection:playbooks
+    image: i2btech/ansible-collection:latest
     hostname: playbooks
     env_file: .devcontainer/.env
-    command:
-        - i2btech.ops.sqlbackup
-        - --extra-vars
-        - '{"sql_host":"i2btech-core-prd-i2bwebngprd.cmvnulshhnnh.us-east-1.rds.amazonaws.com","sql_user":"i2bwebngprd_user","sql_dbs":"i2bwebngprd,i2bwebngprd","s3_bucket":"i2btech-core-prd-logsrotate","s3_prefix":"sqlbackup"}'
+    entrypoint: ["/home/ubuntu/.local/bin/ansible-playbook"]
+    command: ["i2btech.ops.sqlbackup"]
+    environment:
+      SQL_TYPE: "postgresql"
+      SQL_HOST: "i2btechcoreprdkanban.cmvnulshhnnh.us-east-1.rds.amazonaws.com"
+      SQL_USER: "manager"
+      SQL_DBS: "i2btechcoreprdkanban"
     volumes:
       - $HOME/.aws:/home/ubuntu/.aws
