@@ -1,5 +1,5 @@
-i2b.logrotate
-=============
+i2btech.ops.logrotate
+====================
 
 Rotate log files using LogRotate, files are uploaded to AWS S3 bucket.
 
@@ -33,7 +33,7 @@ Rotate logs and upload to S3
 ```yaml
 - hosts: "tag_Role_admin"
   roles:
-    - role: i2b.logrotate
+    - role: i2btech.ops.logrotate
       host: "web-server"
       service: "nginx"
       logs_directories_list:

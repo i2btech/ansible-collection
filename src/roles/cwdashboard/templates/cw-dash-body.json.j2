@@ -1,0 +1,551 @@
+{
+  "widgets": [
+    {
+        "type": "text",
+        "x": 0,
+        "y": 0,
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**Created_using_Ansible_do_not_edit_manually**"
+        }
+    }
+    {% set location = 1 %}
+
+{% if dashboard_metrics.ecs is defined %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**ECS**"
+        }
+    }
+
+    {% for cluster in dashboard_metrics.ecs %}
+
+        ,{
+            "type": "metric",
+            "x": 0,
+            "y": {{ location + 1 }},
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                    [ "AWS/ECS", "CPUReservation", "ClusterName", "{{ cluster.cluster }}" ],
+                    [ "AWS/ECS", "CPUUtilization", "ClusterName", "{{ cluster.cluster }}" ]
+                ],
+                "region": "{{ dashboard_region }}",
+                "title": "{{ cluster.cluster }}__Cluster-CPU"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 6,
+            "y": {{ location + 1 }},
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                    [ "AWS/ECS", "MemoryUtilization", "ClusterName", "{{ cluster.cluster }}" ],
+                    [ "AWS/ECS", "MemoryReservation", "ClusterName", "{{ cluster.cluster }}" ]
+                ],
+                "region": "{{ dashboard_region }}",
+                "title": "{{ cluster.cluster }}__Cluster-RAM"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 12,
+            "y": {{ location + 1 }},
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    {% for svr in cluster.services %}
+                    [ "AWS/ECS", "CPUUtilization", "ServiceName", "{{ svr.name }}", "ClusterName", "{{ cluster.cluster }}", { "label": "{{ svr.label }}" } ]{{ ", " if not loop.last else "" }}
+                    {% endfor %}
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "{{ dashboard_region }}",
+                "period": 300,
+                "title": "{{ cluster.cluster }}__Service-CPU"
+            }
+        },
+        {
+            "type": "metric",
+            "x": 18,
+            "y": {{ location + 1 }},
+            "width": 6,
+            "height": 6,
+            "properties": {
+                "metrics": [
+                    {% for svr in cluster.services %}
+                    [ "AWS/ECS", "MemoryUtilization", "ServiceName", "{{ svr.name }}", "ClusterName", "{{ cluster.cluster }}", { "label": "{{ svr.label }}" } ]{{ ", " if not loop.last else "" }}
+                    {% endfor %}
+                ],
+                "view": "timeSeries",
+                "stacked": false,
+                "region": "{{ dashboard_region }}",
+                "period": 300,
+                "title": "{{ cluster.cluster }}__Service-RAM"
+            }
+        }
+
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.alb is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**ALB**"
+        }
+    },
+
+    {% for alb_inner in dashboard_metrics.alb %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", "{{ alb_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "TargetResponseTime__{{ alb_inner }}"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 6,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/ApplicationELB", "ActiveConnectionCount", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "NewConnectionCount", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "{{ alb_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "period": 300,
+            "title": "Connections__{{ alb_inner }}",
+            "stat": "Sum"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 12,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/ApplicationELB", "HTTPCode_Target_2XX_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_ELB_4XX_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_ELB_503_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_ELB_504_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_ELB_5XX_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_Target_4XX_Count", "LoadBalancer", "{{ alb_inner }}" ],
+                [ "AWS/ApplicationELB", "HTTPCode_Target_5XX_Count", "LoadBalancer", "{{ alb_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "HTTPCodes__{{ alb_inner }}",
+            "stat": "Sum"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 18,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/ApplicationELB", "ProcessedBytes", "LoadBalancer", "{{ alb_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "ProcessedBytes__{{ alb_inner }}",
+            "stat": "Sum"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.nlb is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**NLB**"
+        }
+    },
+
+    {% for nlb_inner in dashboard_metrics.nlb %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/NetworkELB", "ProcessedBytes", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "ProcessedBytes",
+            "period": 300,
+            "stat": "Sum"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 6,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/NetworkELB", "ActiveFlowCount", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ],
+                [ "AWS/NetworkELB", "ActiveFlowCount_TCP", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ],
+                [ "AWS/NetworkELB", "ActiveFlowCount_TLS", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "ActiveFlowCount_(active-connections)",
+            "period": 300,
+            "stat": "Average"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 12,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/NetworkELB", "NewFlowCount", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ],
+                [ "AWS/NetworkELB", "NewFlowCount_TCP", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ],
+                [ "AWS/NetworkELB", "NewFlowCount_TLS", "LoadBalancer", "{{ dashboard_metrics.nlb_name }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "NewFlowCount_(new-connections)",
+            "period": 300,
+            "stat": "Sum"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.ec2_asg is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**Auto Scaling Groups**"
+        }
+    },
+
+    {% for asg in dashboard_metrics.ec2_asg %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/EC2", "CPUUtilization", "AutoScalingGroupName", "{{ asg }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "CPU - {{ asg }}"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 6,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "CWAgent", "mem_used_percent", "AutoScalingGroupName", "{{ asg }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "period": 300,
+            "title": "RAM - {{ asg }}"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 12,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "metrics": [
+                [ "AWS/EC2", "NetworkIn", "AutoScalingGroupName", "{{ asg }}", { "label": "NetworkIn" } ],
+                [ "AWS/EC2", "NetworkOut", "AutoScalingGroupName", "{{ asg }}", { "label": "NetworkOut" } ]
+            ],
+            "view": "timeSeries",
+            "stacked": false,
+            "region": "{{ dashboard_region }}",
+            "title": "Net-IO",
+            "period": 300,
+            "stat": "Sum"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.rds is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**DB**"
+        }
+    },
+
+    {% for rds_inner in dashboard_metrics.rds %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/RDS", "FreeableMemory", "DBInstanceIdentifier", "{{ rds_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "FreeRAM__{{ rds_inner }}"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 6,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "metrics": [
+                [ "AWS/RDS", "NetworkTransmitThroughput", "DBInstanceIdentifier", "{{ rds_inner }}", { "label": "NetworkTransmit_Throughput" } ],
+                [ "AWS/RDS", "NetworkReceiveThroughput", "DBInstanceIdentifier", "{{ rds_inner }}", { "label": "NetworkReceive_Throughput" } ],
+                [ "AWS/RDS", "ReadThroughput", "DBInstanceIdentifier", "{{ rds_inner }}", { "label": "HDDRead_Throughput" } ],
+                [ "AWS/RDS", "WriteThroughput", "DBInstanceIdentifier", "{{ rds_inner }}", { "label": "HDDWrite_Throughput" } ]
+            ],
+            "view": "timeSeries",
+            "stacked": false,
+            "region": "{{ dashboard_region }}",
+            "title": "Net-HDD-IO__{{ rds_inner }}",
+            "period": 300,
+            "stat": "Sum"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 12,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", "{{ rds_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "CPU__{{ rds_inner }}"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 18,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/RDS", "DatabaseConnections", "DBInstanceIdentifier", "{{ rds_inner }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "Connections__{{ rds_inner }}"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.asg_cpu_credits is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**Auto Scaling Groups - CPU Credits**"
+        }
+    },
+
+    {% for asg in dashboard_metrics.asg_cpu_credits %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                [ "AWS/EC2", "CPUCreditBalance", "AutoScalingGroupName", "{{ asg }}" ],
+                [ "AWS/EC2", "CPUCreditUsage", "AutoScalingGroupName", "{{ asg }}" ]
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "CPU Credit - {{ asg }}",
+            "stat": "Sum"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+{% if dashboard_metrics.redis is defined %}
+    {% set location = location + 7 %}
+
+    ,{
+        "type": "text",
+        "x": 0,
+        "y": {{ location }},
+        "width": 24,
+        "height": 1,
+        "properties": {
+            "markdown": "**ElastiCache - Redis**"
+        }
+    },
+
+    {% for redis_inner in dashboard_metrics.redis %}
+    {
+        "type": "metric",
+        "x": 0,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                {% for node in redis_inner.nodes %}
+                [ "AWS/ElastiCache", "DatabaseMemoryUsagePercentage", "CacheClusterId", "{{ redis_inner.cluster }}-{{ node.name }}" ]{{ ", " if not loop.last else "" }}
+                {% endfor %}
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "Memory usage %__{{ redis_inner.cluster }}",
+            "stat": "Average"
+        }
+    },
+    {
+        "type": "metric",
+        "x": 6,
+        "y": {{ location + 1 }},
+        "width": 6,
+        "height": 6,
+        "properties": {
+            "view": "timeSeries",
+            "stacked": false,
+            "metrics": [
+                {% for node in redis_inner.nodes %}
+                [ "AWS/ElastiCache", "CacheHitRate", "CacheClusterId", "{{ redis_inner.cluster }}-{{ node.name }}" ]{{ ", " if not loop.last else "" }}
+                {% endfor %}
+            ],
+            "region": "{{ dashboard_region }}",
+            "title": "Cache hit rate %__{{ redis_inner.cluster }}",
+            "stat": "Average"
+        }
+    }
+    {% if not loop.last %}
+        ,
+    {% endif %}
+    {% endfor %}
+
+{% endif %}
+
+  ]
+}

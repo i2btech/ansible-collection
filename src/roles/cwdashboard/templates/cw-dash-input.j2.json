@@ -1,0 +1,4 @@
+{
+  "DashboardName": "{{ dashboard_name }}",
+  "DashboardBody": "{{ body }}"
+}

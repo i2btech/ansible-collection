@@ -1,0 +1,46 @@
+- name: Set timestamp
+  set_fact:
+    timestamp: "{{ lookup('pipe','date +%Y%m%d-%H%M%S') }}"
+  changed_when: false
+
+- name: Set files path
+  set_fact:
+    dash_body: "/tmp/cw-dash-body-{{ timestamp }}.json"
+    dash_input: "/tmp/cw-dash-input-{{ timestamp }}.json"
+  changed_when: false
+
+- name: Ensure template body exists
+  template:
+    src: "cw-dash-body.json.j2"
+    dest: "{{ dash_body }}"
+  changed_when: false
+
+- name: Get body
+  # remove spaces, new lines and replace " with \"
+  shell: J=$(cat {{ dash_body }} | tr -d "\n" | tr -d " ") && echo ${J//\"/\\\"}
+  args:
+    executable: /bin/bash
+  register: tmp_body
+
+- name: Sets body
+  set_fact:
+    body: "{{ tmp_body.stdout }}"
+  changed_when: false
+
+- name: Ensure template input exists
+  template:
+    src: "{{ role_path }}/templates/cw-dash-input.j2.json"
+    dest: "{{ dash_input }}"
+  changed_when: false
+
+- name: Ensure dashboard exists
+  command: "aws cloudwatch put-dashboard --cli-input-json '{{ lookup('file', dash_input) }}' --region {{ aws_region }}"
+
+- name: Delete template
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /tmp/cw-dash-body-{{ timestamp }}.json
+    - /tmp/cw-dash-input-{{ timestamp }}.json
+  changed_when: false
