@@ -8,6 +8,8 @@ gws_users:
     title: "Consultor"
     signature: "chile"
     phone: "555 55555"
+    calendar: "https://calendar.google.com/calendar/u/0?cid=asdf"
+    time_zone: "GMT-5"
   - mail: other.user@i2btech.com
     full_name: "Other User"
     first_name: "Other"

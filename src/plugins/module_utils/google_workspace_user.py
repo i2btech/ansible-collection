@@ -84,6 +84,8 @@ class GoogleWorkspaceUserHelper:
             full_name=user_info['full_name'],
             title=user_info['title'],
             phone=user_info['phone'] if "phone" in user_info else None,
+            calendar=user_info['calendar'] if "calendar" in user_info else None,
+            time_zone=user_info['time_zone'] if "time_zone" in user_info else None,
         )
         return rendered_string
 
