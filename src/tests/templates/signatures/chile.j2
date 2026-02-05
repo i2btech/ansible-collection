@@ -36,6 +36,10 @@
   	<td colspan="10" style="text-align:left">
         <span style="font-family:Arial;font-size:11px;">
             La Concepci&oacute;n 141, Depto 501, Piso 5 <br> Santiago, Chile
+            {% if time_zone %}
+                <br>
+                Zona horaria: {{ time_zone }}
+            {% endif %}
         </span><br>
   		<span style="font-size:11px;font-family:Arial,Helvetica,sans-serif">
 
@@ -44,7 +48,12 @@
         {% endif %}
 
         <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#f00">
-            <a href="https://www.google.com/maps/place/La+Concepci%C3%B3n+141,+Providencia,+Regi%C3%B3n+Metropolitana,+Chile/@-33.4245146,-70.6159423,17z/data=!3m1!4b1!4m2!3m1!1s0x9662cf615b7d4d29:0x6daf452c3d82cad0" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Mapa</a> | <a href="http://www.i2btech.com" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Sitio</a></span></span><span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#f00"><a href="http://www.i2btech.com" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank"></a> | <a href="http://www.linkedin.com/company/1358465?trk=vsrp_companies_res_name&amp;trkInfo=VSRPsearchId%3A656249181383574316121%2CVSRPtargetId%3A1358465%2CVSRPcmpt%3Aprimary" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Linkedin</a>
+            <a href="https://www.google.com/maps/place/La+Concepci%C3%B3n+141,+Providencia,+Regi%C3%B3n+Metropolitana,+Chile/@-33.4245146,-70.6159423,17z/data=!3m1!4b1!4m2!3m1!1s0x9662cf615b7d4d29:0x6daf452c3d82cad0" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Mapa</a>
+            | <a href="http://www.i2btech.com" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Sitio</a></span></span><span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#f00"><a href="http://www.i2btech.com" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank"></a>
+            | <a href="http://www.linkedin.com/company/1358465?trk=vsrp_companies_res_name&amp;trkInfo=VSRPsearchId%3A656249181383574316121%2CVSRPtargetId%3A1358465%2CVSRPcmpt%3Aprimary" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Linkedin</a>
+            {% if calendar %}
+            | <a href="{{ calendar }}" style="font-family:Arial;font-size:11px;line-height:13px;text-align:left;color:#d51f25" target="_blank">Calendario</a>
+            {% endif %}
         </span>
 	</td>
   </tr>
