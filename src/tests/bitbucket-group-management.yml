@@ -16,7 +16,7 @@
         workspace: "i2b"
         name: "poc-sample"
         members:
-          - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/user
+          - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
         repo_permissions:
           - repository: "poc-sample"
             privilege: "write"

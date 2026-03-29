@@ -20,14 +20,14 @@
             branch_match_kind: glob
             pattern: "master"
             users:
-              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/user
+              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
             groups:
               - administrators
           - kind: push
             branch_match_kind: branching_model
             branch_type: release
             users:
-              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/user
+              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
             groups:
               - administrators
           # - kind: force
