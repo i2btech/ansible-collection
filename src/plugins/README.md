@@ -29,3 +29,12 @@ Here is an example directory of the majority of plugins currently supported by A
 ```
 
 A full list of plugin types can be found at [Working With Plugins](https://docs.ansible.com/ansible-core/2.13/plugins/plugins.html).
+
+# Bitbucket
+
+- [API documentation](https://developer.atlassian.com/cloud/bitbucket/rest/api-group-branch-restrictions/#api-group-branch-restrictions)
+- [API Definition](https://dac-static.atlassian.com/cloud/bitbucket/swagger.v3.json)
+
+# Ansible
+
+- [Developing modules](https://docs.ansible.com/projects/ansible/latest/dev_guide/developing_modules_general.html#developing-modules-general)

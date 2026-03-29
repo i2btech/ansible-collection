@@ -39,6 +39,7 @@ class BitbucketHelper:
         'repos-pipeline': '{url}/repositories/{workspace}/{repo_slug}/pipelines_config',
         'repos-environments': '{url}/repositories/{workspace}/{repo_slug}/environments',
         'repos-deployments': '{url}/repositories/{workspace}/{repo_slug}/deployments_config',
+        'repos-branch-restrictions': '{url}/repositories/{workspace}/{repo_slug}/branch-restrictions',
     }
 
     def __init__(self, module):
@@ -640,5 +641,86 @@ class BitbucketHelper:
             )
 
         # error 409: A variable with the provided key already exists.
+
+        return None
+
+    def get_branch_restrictions(self):
+        """
+        Retrieve all branch restriction rules for the specified repository.
+        """
+
+        restrictions = []
+        is_last_page = False
+
+        api_url = self.BITBUCKET_API_ENDPOINTS['repos-branch-restrictions'].format(
+            url=self.module.params['url'],
+            workspace='i2b',
+            repo_slug=self.module.params['repository'])
+
+        while not is_last_page:
+            info, content = self.request(
+                api_url,
+                module=self.module,
+                method='GET',
+            )
+
+            if info['status'] != 200:
+                self.module.fail_json(
+                    msg=error_messages['unknown_error'].format(info=info)
+                )
+
+            if 'values' in content:
+                restrictions.extend(content['values'])
+
+            if 'next' in content:
+                api_url = content['next']
+            else:
+                is_last_page = True
+
+        return restrictions
+
+    def manage_branch_restriction(self, action, restriction_data=None, restriction_id=None):
+        """
+        Create, update, or delete a branch restriction rule.
+        action: 'create', 'update', or 'delete'
+        restriction_data: dict with the restriction fields (for create/update)
+        restriction_id: int restriction ID (for update/delete)
+        """
+
+        api_url = self.BITBUCKET_API_ENDPOINTS['repos-branch-restrictions'].format(
+            url=self.module.params['url'],
+            workspace='i2b',
+            repo_slug=self.module.params['repository'])
+
+        if action == 'create':
+            api_verb = 'POST'
+            api_path = ''
+            api_data = restriction_data
+        elif action == 'update':
+            api_verb = 'PUT'
+            api_path = '/' + str(restriction_id)
+            api_data = restriction_data
+        elif action == 'delete':
+            api_verb = 'DELETE'
+            api_path = '/' + str(restriction_id)
+            api_data = {}
+
+        info, content = self.request(
+            api_url + api_path,
+            module=self.module,
+            method=api_verb,
+            data=api_data,
+        )
+
+        if action == 'create' and info['status'] == 201:
+            return content
+        if action == 'update' and info['status'] == 200:
+            return content
+        if action == 'delete' and info['status'] == 204:
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
 
         return None
