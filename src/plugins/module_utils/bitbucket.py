@@ -7,6 +7,10 @@ __metaclass__ = type
 
 import json
 import time
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url, basic_auth_header
@@ -31,6 +35,7 @@ class BitbucketHelper:
     """
 
     BITBUCKET_API_URL = 'https://api.bitbucket.org/2.0'
+    BITBUCKET_API_V1_URL = 'https://api.bitbucket.org/1.0'
 
     BITBUCKET_API_ENDPOINTS = {
         'repos': '{url}/repositories/{workspace}/{repo_slug}',
@@ -39,6 +44,7 @@ class BitbucketHelper:
         'repos-pipeline': '{url}/repositories/{workspace}/{repo_slug}/pipelines_config',
         'repos-environments': '{url}/repositories/{workspace}/{repo_slug}/environments',
         'repos-deployments': '{url}/repositories/{workspace}/{repo_slug}/deployments_config',
+        'repos-branch-restrictions': '{url}/repositories/{workspace}/{repo_slug}/branch-restrictions',
     }
 
     def __init__(self, module):
@@ -642,3 +648,341 @@ class BitbucketHelper:
         # error 409: A variable with the provided key already exists.
 
         return None
+
+    def get_branch_restrictions(self):
+        """
+        Retrieve all branch restriction rules for the specified repository.
+        """
+
+        restrictions = []
+        is_last_page = False
+
+        api_url = self.BITBUCKET_API_ENDPOINTS['repos-branch-restrictions'].format(
+            url=self.module.params['url'],
+            workspace='i2b',
+            repo_slug=self.module.params['repository'])
+
+        while not is_last_page:
+            info, content = self.request(
+                api_url,
+                module=self.module,
+                method='GET',
+            )
+
+            if info['status'] != 200:
+                self.module.fail_json(
+                    msg=error_messages['unknown_error'].format(info=info)
+                )
+
+            if 'values' in content:
+                restrictions.extend(content['values'])
+
+            if 'next' in content:
+                api_url = content['next']
+            else:
+                is_last_page = True
+
+        return restrictions
+
+    def manage_branch_restriction(self, action, restriction_data=None, restriction_id=None):
+        """
+        Create, update, or delete a branch restriction rule.
+        action: 'create', 'update', or 'delete'
+        restriction_data: dict with the restriction fields (for create/update)
+        restriction_id: int restriction ID (for update/delete)
+        """
+
+        api_url = self.BITBUCKET_API_ENDPOINTS['repos-branch-restrictions'].format(
+            url=self.module.params['url'],
+            workspace='i2b',
+            repo_slug=self.module.params['repository'])
+
+        if action == 'create':
+            api_verb = 'POST'
+            api_path = ''
+            api_data = restriction_data
+        elif action == 'update':
+            api_verb = 'PUT'
+            api_path = '/' + str(restriction_id)
+            api_data = restriction_data
+        elif action == 'delete':
+            api_verb = 'DELETE'
+            api_path = '/' + str(restriction_id)
+            api_data = {}
+
+        info, content = self.request(
+            api_url + api_path,
+            module=self.module,
+            method=api_verb,
+            data=api_data,
+        )
+
+        if action == 'create' and info['status'] == 201:
+            return content
+        if action == 'update' and info['status'] == 200:
+            return content
+        if action == 'delete' and info['status'] == 204:
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return None
+    def get_group_repo_privileges(self, workspace, group_owner, group_slug):
+        """
+        Get all repository privileges for a group using Bitbucket API v1.
+        Returns a list of privilege objects.
+        Each object contains a 'repo' field in the format 'owner/repo-slug'
+        and a 'privilege' field (read|write|admin).
+        """
+
+        api_url = '{}/group-privileges/{}/{}/{}'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_owner, group_slug
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='GET',
+        )
+
+        if info['status'] == 200:
+            return content.get('json', [])
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return []
+
+    def set_group_repo_privilege(self, workspace, repo_slug, group_owner, group_slug, privilege):
+        """
+        Grant or update group privilege on a repository using Bitbucket API v1.
+        privilege must be one of: read, write, admin.
+        The privilege value is sent as plain form data, as required by the API.
+        Returns the response content on success.
+        """
+
+        api_url = '{}/group-privileges/{}/{}/{}/{}'.format(
+            self.BITBUCKET_API_V1_URL, workspace, repo_slug, group_owner, group_slug
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='PUT',
+            data=privilege,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+        )
+
+        if info['status'] in (200, 201, 204):
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return None
+
+    def delete_group_repo_privilege(self, workspace, repo_slug, group_owner, group_slug):
+        """
+        Delete group privilege from a specific repository using Bitbucket API v1.
+        Returns True on success.
+        """
+
+        api_url = '{}/group-privileges/{}/{}/{}/{}'.format(
+            self.BITBUCKET_API_V1_URL, workspace, repo_slug, group_owner, group_slug
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='DELETE',
+        )
+
+        if info['status'] in (200, 204):
+            return True
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return False
+    def get_groups(self, workspace):
+        """
+        Get all groups for a workspace using Bitbucket API v1.
+        Returns a list of group dicts.
+        """
+
+        api_url = '{}/groups/{}/'.format(self.BITBUCKET_API_V1_URL, workspace)
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='GET',
+        )
+
+        if info['status'] == 200:
+            return content.get('json', [])
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return []
+
+    def create_group(self, workspace, name):
+        """
+        Create a new group in a workspace using Bitbucket API v1.
+        The name is sent as URL-encoded form data.
+        Returns the created group dict on success.
+        """
+
+        api_url = '{}/groups/{}'.format(self.BITBUCKET_API_V1_URL, workspace)
+        form_data = urlencode({'name': name})
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='POST',
+            data=form_data,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+        )
+
+        if info['status'] in (200, 201):
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return None
+
+    def update_group(self, workspace, group_slug, name=None, permission=None):
+        """
+        Update an existing group in a workspace using Bitbucket API v1.
+        Accepts optional new name and/or permission (read|write|admin).
+        Returns the updated group dict on success.
+        """
+
+        api_url = '{}/groups/{}/{}/'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_slug
+        )
+        data = {}
+        if name is not None:
+            data['name'] = name
+        if permission is not None:
+            data['permission'] = permission
+
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='PUT',
+            data=data,
+        )
+
+        if info['status'] == 200:
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return None
+
+    def delete_group(self, workspace, group_slug):
+        """
+        Delete a group from a workspace using Bitbucket API v1.
+        Returns True on success.
+        """
+
+        api_url = '{}/groups/{}/{}/'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_slug
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='DELETE',
+        )
+
+        if info['status'] in (200, 204):
+            return True
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return False
+
+    def get_group_members(self, workspace, group_slug):
+        """
+        Get all members of a group using Bitbucket API v1.
+        Returns a list of member profile dicts.
+        """
+
+        api_url = '{}/groups/{}/{}/members'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_slug
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='GET',
+        )
+
+        if info['status'] == 200:
+            return content.get('json', [])
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return []
+
+    def add_group_member(self, workspace, group_slug, member_uuid):
+        """
+        Add a member to a group using Bitbucket API v1.
+        member_uuid should be in the form {uuid}, e.g. {c423e13e-...}.
+        Returns the member profile dict on success.
+        """
+
+        encoded_uuid = member_uuid.replace('{', '%7B').replace('}', '%7D')
+        api_url = '{}/groups/{}/{}/members/{}/'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_slug, encoded_uuid
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='PUT',
+            data={},
+        )
+
+        if info['status'] in (200, 201):
+            return content
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return None
+
+    def remove_group_member(self, workspace, group_slug, member_uuid):
+        """
+        Remove a member from a group using Bitbucket API v1.
+        member_uuid should be in the form {uuid}, e.g. {c423e13e-...}.
+        Returns True on success.
+        """
+
+        encoded_uuid = member_uuid.replace('{', '%7B').replace('}', '%7D')
+        api_url = '{}/groups/{}/{}/members/{}'.format(
+            self.BITBUCKET_API_V1_URL, workspace, group_slug, encoded_uuid
+        )
+        info, content = self.request(
+            api_url,
+            module=self.module,
+            method='DELETE',
+        )
+
+        if info['status'] in (200, 204):
+            return True
+
+        self.module.fail_json(
+            msg=error_messages['unknown_error'].format(info=info)
+        )
+
+        return False

@@ -62,7 +62,3 @@ You need to have at hand the values for secrets `ANSIBLE_GALAXY_API_KEY` and `DO
 - Add [ansible-test](https://www.ansible.com/blog/introduction-to-ansible-test)
 - update `test-playbooks.yml`, add dummy files to rotate; see `src/tests/README.md`
 - Nedd to split release workflow in multiple jobs for github, ansible-gallaxy and dockerhub. Currently if one fail all fails.
-
-# Links
-
-- https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#developing-modules-general

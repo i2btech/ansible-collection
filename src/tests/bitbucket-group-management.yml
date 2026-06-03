@@ -1,0 +1,40 @@
+- name: "Validate bitbucket_group_management module"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+    - vars/bitbucket.yml
+
+  tasks:
+
+    - name: Create a group with write permission and repo access
+      i2btech.ops.bitbucket_group_management:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        workspace: "i2b"
+        name: "poc-sample"
+        members:
+          - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
+        repo_permissions:
+          - repository: "poc-sample"
+            privilege: "write"
+        state: present
+
+    - name: Revoke all repository permissions for the group
+      i2btech.ops.bitbucket_group_management:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        workspace: "i2b"
+        name: "poc-sample"
+        repo_permissions: []
+        state: present
+
+    - name: Remove the group
+      i2btech.ops.bitbucket_group_management:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        workspace: "i2b"
+        slug: "poc-sample" # Slug is required for deletion
+        state: absent

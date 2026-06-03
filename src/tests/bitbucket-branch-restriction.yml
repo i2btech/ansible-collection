@@ -1,0 +1,46 @@
+- name: "Validate branch restriction configuration on repo"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/bitbucket.yml
+
+  tasks:
+
+    - name: Test bitbucket_branch_restriction module
+      i2btech.ops.bitbucket_branch_restriction:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        repository: "poc-sample"
+        restrictions:
+          - kind: push
+            branch_match_kind: glob
+            pattern: "master"
+            users:
+              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
+            groups:
+              - administrators
+          - kind: push
+            branch_match_kind: branching_model
+            branch_type: release
+            users:
+              - "{aaa-bbb-ccc-ddd-eee}" # UUID from https://bitbucket.org/!api/2.0/workspaces/i2b/members
+            groups:
+              - administrators
+          # - kind: force
+          #   branch_match_kind: glob
+          #   pattern: "master"
+          # - kind: delete
+          #   branch_match_kind: glob
+          #   pattern: "master"
+          # - kind: require_approvals_to_merge
+          #   branch_match_kind: branching_model
+          #   branch_type: production
+          #   value: 2
+          # - kind: require_passing_builds_to_merge
+          #   branch_match_kind: branching_model
+          #   branch_type: production
+          #   value: 1
