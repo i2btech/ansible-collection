@@ -80,6 +80,7 @@ class GoogleWorkspaceGroupHelper:
                 return result
 
             settings_definition = types_definition["settings"][0]
+            settings_definition.update({"allowExternalMembers": group_definition.get("allow_externals", "false")})
             settings_current = self.get_settings(service, group)
 
             if settings_definition != settings_current:
@@ -211,6 +212,7 @@ class GoogleWorkspaceGroupHelper:
 
             if GROUP_ACTIVE:
                 # apply settings
+                type["settings"][0].update({"allowExternalMembers": group.get("allow_externals", "false")})
                 service_grp_settings.groups().patch(
                     groupUniqueId=group["mail"],
                     body=type["settings"][0]
@@ -244,6 +246,7 @@ class GoogleWorkspaceGroupHelper:
             # update name, description and settings
             type["settings"][0]["name"] = group["name"]
             type["settings"][0]["description"] = group["description"]
+            type["settings"][0].update({"allowExternalMembers": group.get("allow_externals", "false")})
 
             service_grp_settings.groups().patch(
                 groupUniqueId=group["mail"],
@@ -286,7 +289,7 @@ class GoogleWorkspaceGroupHelper:
 
         except Exception as error:
             result["failed"] = True
-            result["message"].append(str(error))
+            result["message"].append(f"Details: {repr(error)}")
 
         return result
 

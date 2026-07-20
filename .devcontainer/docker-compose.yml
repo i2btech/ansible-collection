@@ -7,4 +7,6 @@ services:
       - $HOME/.ssh:/home/ubuntu/.ssh
       - $HOME/.aws:/home/ubuntu/.aws
       - $HOME/.vscode-server/extensions:/home/ubuntu/.vscode-server/extensions
+      - $HOME/.claude:/home/ubuntu/.claude
+      - $HOME/.claude.json:/home/ubuntu/.claude.json
     hostname: devcontainer
