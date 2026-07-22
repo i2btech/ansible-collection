@@ -24,6 +24,12 @@
   register: my_output
   changed_when: my_output.rc == 0
 
+- name: "Ensure files to be uploaded has correct permissions"
+  ansible.builtin.file:
+    path: "{{ logrotate_root }}"
+    mode: "0777"
+    recurse: true
+
 - name: "Upload files to Bucket"
   community.aws.s3_sync:
     bucket: "{{ s3_bucket_upload }}"
