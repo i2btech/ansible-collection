@@ -34,6 +34,14 @@ gws_groups:
       - user.name@i2btech.com
       - other.user@i2btech.com
       - other.domain.user@yom.ai
+  - mail: self.managed.group@i2btech.com
+    name: "Self managed by a Leader"
+    description: "This group is managed by a leader, not the IT team"
+    type: private
+    allow_externals: "false"
+    admin:
+      - leader1.name@i2btech.com
+      - leader2.user@i2btech.com
 
 gws_group_types:
   - name: external # anyone in and outside the organization
