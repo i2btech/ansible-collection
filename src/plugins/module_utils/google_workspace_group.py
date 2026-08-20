@@ -23,6 +23,12 @@ class GoogleWorkspaceGroupHelper:
         self.module = module
 
 
+    def parse_email_list(self, value):
+        if not value:
+            return []
+        return [email.strip() for email in value.split(",") if email.strip()]
+
+
     def get_members(self, group, service):
 
         results = (
@@ -153,6 +159,29 @@ class GoogleWorkspaceGroupHelper:
 
         # get list of group that need to be created/updated
         action_groups = self.module.params['groups'] if "groups" in self.module.params else []
+
+        # self managed group (smg) membership params - apply only to groups
+        # whose definition has an "admins" key
+        admin_requester = self.module.params.get('smg_admin_requester')
+        members_add = self.parse_email_list(self.module.params.get('smg_members_add'))
+        members_remove = self.parse_email_list(self.module.params.get('smg_members_remove'))
+        smg_params_provided = bool(admin_requester or members_add or members_remove)
+
+        smg_targets = []
+        for group in action_groups:
+            group_definition = next((sub for sub in self.module.params['groups_definition'] if sub['mail'] == group), None)
+            if group_definition is not None and "admins" in group_definition:
+                smg_targets.append(group)
+
+        if smg_params_provided and len(smg_targets) > 1:
+            result["failed"] = True
+            result["message"] = (
+                "smg_admin_requester/smg_members_add/smg_members_remove were provided but "
+                f"{len(smg_targets)} self-managed groups are targeted in 'groups' ({smg_targets}); "
+                "invoke this module once per self-managed group when managing membership"
+            )
+            return result
+
         for group in action_groups:
 
             # get detail of group from list
@@ -169,6 +198,22 @@ class GoogleWorkspaceGroupHelper:
                 result["message"] = "Type definition don't exist"
                 break
 
+            is_smg = "admins" in group_definition
+            skip_membership_sync = False
+
+            if is_smg:
+                if not admin_requester:
+                    # no requester passed this run - leave membership untouched,
+                    # settings/name/description still get synced below
+                    skip_membership_sync = True
+                elif admin_requester not in group_definition.get("admins", []):
+                    result["failed"] = True
+                    result["message"] = (
+                        f"'{admin_requester}' is not authorized to manage group "
+                        f"'{group_definition['mail']}' (not present in its 'admins' list)"
+                    )
+                    break
+
             IF_EXIST_RES=self.check_if_exists(service_directory, group)
             if IF_EXIST_RES == "TRUE":
                 result = self.update(service_directory, group_definition, type_definition, service_grp_settings)
@@ -177,6 +222,13 @@ class GoogleWorkspaceGroupHelper:
             else:
                 result["failed"] = True
                 result["message"] = IF_EXIST_RES
+                break
+
+            if is_smg and not skip_membership_sync and not result["failed"]:
+                smg_result = self.smg_sync_members(service_directory, group_definition["mail"], members_add, members_remove)
+                result["changed"] = result["changed"] or smg_result["changed"]
+                result["failed"] = result["failed"] or smg_result["failed"]
+                result["message"] = result["message"] + smg_result["message"]
 
         return result
  
@@ -218,8 +270,10 @@ class GoogleWorkspaceGroupHelper:
                     body=type["settings"][0]
                 ).execute()
 
-                # add users
-                definition_members = group["members"] if "members" in group else []
+                # add users - self managed groups (admins present) start with no
+                # static membership; smg_members_add is applied afterwards by
+                # create_update() via smg_sync_members()
+                definition_members = [] if "admins" in group else group.get("members", [])
                 for user in definition_members:
                     res = self.member_insert_delete("insert", service_directory, group["mail"], user)
                     if res != "OK":
@@ -231,7 +285,7 @@ class GoogleWorkspaceGroupHelper:
 
         except Exception as error:
             result['failed'] = True
-            result["message"] = error
+            result["message"].append(f"Details: {repr(error)}")
 
         return result
 
@@ -255,35 +309,84 @@ class GoogleWorkspaceGroupHelper:
             # TODO: need to validate if settings where actually changed
             result["changed"] = True
 
-            # get defined members
-            definition_members = group["members"] if "members" in group else []
+            # self managed groups (admins present) never reconcile membership
+            # against a static "members" list - membership is handled at
+            # runtime by create_update() via smg_sync_members()
+            if "admins" not in group:
+                # get defined members
+                definition_members = group["members"] if "members" in group else []
 
-            # get current members
+                # get current members
+                current_members = []
+                results = (
+                    service_directory.members()
+                    .list(groupKey=group["mail"])
+                    .execute()
+                )
+                if "members" in results:
+                    for member in results["members"]:
+                        current_members.append(member["email"])
+
+                # add members
+                for deleted in set(current_members).difference(definition_members):
+                    res = self.member_insert_delete("delete", service_directory, group["mail"], deleted)
+                    if res != "OK":
+                        result["failed"] = True
+                        result["message"].append(deleted + ": " + res)
+                    else:
+                        result["changed"] = True
+
+                # delete members
+                for added in set(definition_members).difference(current_members):
+                    res = self.member_insert_delete("insert", service_directory, group["mail"], added)
+                    if res != "OK":
+                        result["failed"] = True
+                        result["message"].append(added + ": " + res)
+                    else:
+                        result["changed"] = True
+
+        except Exception as error:
+            result["failed"] = True
+            result["message"].append(f"Details: {repr(error)}")
+
+        return result
+
+
+    def smg_sync_members(self, service_directory, group_mail, members_add, members_remove):
+        result = {
+            "changed": False,
+            "failed": False,
+            "message": []
+        }
+        try:
             current_members = []
             results = (
                 service_directory.members()
-                .list(groupKey=group["mail"])
+                .list(groupKey=group_mail)
                 .execute()
             )
             if "members" in results:
                 for member in results["members"]:
                     current_members.append(member["email"])
 
-            # add members
-            for deleted in set(current_members).difference(definition_members):
-                res = self.member_insert_delete("delete", service_directory, group["mail"], deleted)
+            current_set = set(current_members)
+            remove_set = set(members_remove)
+            # if an email is in both lists, removal wins
+            add_set = set(members_add) - remove_set
+
+            for member in sorted(remove_set & current_set):
+                res = self.member_insert_delete("delete", service_directory, group_mail, member)
                 if res != "OK":
                     result["failed"] = True
-                    result["message"].append(deleted + ": " + res)
+                    result["message"].append(member + ": " + res)
                 else:
                     result["changed"] = True
 
-            # delete members
-            for added in set(definition_members).difference(current_members):
-                res = self.member_insert_delete("insert", service_directory, group["mail"], added)
+            for member in sorted(add_set - current_set):
+                res = self.member_insert_delete("insert", service_directory, group_mail, member)
                 if res != "OK":
                     result["failed"] = True
-                    result["message"].append(added + ": " + res)
+                    result["message"].append(member + ": " + res)
                 else:
                     result["changed"] = True
 

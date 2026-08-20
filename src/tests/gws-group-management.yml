@@ -38,7 +38,7 @@
         groups_definition: "{{ gws_groups }}"
         groups_types: "{{ gws_group_types }}"
         groups:
-          - group.users@i2btech.com
+          - self.managed.group@i2btech.com
         smg_admin_requester: leader1.name@i2btech.com
         smg_members_add: "member1@i2btech.com,member2@i2btech.com"
         smg_members_remove: "member1@i2btech.com,member2@i2btech.com"

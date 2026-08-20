@@ -26,7 +26,7 @@ options:
         default: 'credential.json'
     action:
         description:
-          - Action to perform: check|create_update|smg_create_update|smg_add_member|smg_remove_member
+          - Action to perform: check|create_update
         type: str
         required: true
     used_by:
@@ -37,6 +37,10 @@ options:
     groups_definition:
         description:
             - A list of groups.
+            - A group entry may include an optional C(admins) key (list of emails) marking it as
+              self-managed. For self-managed groups, the C(members) key is ignored entirely (even
+              at creation) - membership is instead controlled at runtime via C(smg_admin_requester),
+              C(smg_members_add) and C(smg_members_remove).
         type: list
         elements: dict
         required: true
@@ -54,14 +58,29 @@ options:
         type: list
         elements: str
         required: false
-    smg_admin:
+    smg_admin_requester:
         description:
-          - User that is requeting the action, they need to the a group admin.
+          - Email of the user requesting a membership change on a self-managed group.
+          - Required only when the targeted group's definition contains an C(admins) list
+            (i.e. it is a self-managed group) and a membership change is desired; the module
+            fails if this email is not present in that group's C(admins) list.
+          - If omitted while targeting a self-managed group, membership is left untouched for
+            that group (name/description/settings are still synced).
+          - Only one self-managed group may be targeted per invocation when this is set.
         type: str
         required: false
-    smg_members:
+    smg_members_add:
         description:
-          - List separated by commas of email user that need to be added or removed from group.
+          - Comma separated list of member emails to add to a self-managed group.
+          - Ignored for groups without an C(admins) key. Adding an already-present member is a no-op.
+          - If an email appears in both C(smg_members_add) and C(smg_members_remove), removal
+            takes precedence.
+        type: str
+        required: false
+    smg_members_remove:
+        description:
+          - Comma separated list of member emails to remove from a self-managed group.
+          - Ignored for groups without an C(admins) key. Removing an already-absent member is a no-op.
         type: str
         required: false
 
@@ -77,6 +96,18 @@ EXAMPLES = r'''
     groups_types: "{{ gws_group_types }}"
     group:
         - group.users@i2btech.com
+
+- name: Add/remove members of a self managed group
+    i2btech.ops.gws_group_management:
+    action: "create_update"
+    used_by: "admin@i2btech.com"
+    groups_definition: "{{ gws_groups }}"
+    groups_types: "{{ gws_group_types }}"
+    groups:
+        - self.managed.group@i2btech.com
+    smg_admin_requester: leader1.name@i2btech.com
+    smg_members_add: "member1@i2btech.com,member2@i2btech.com"
+    smg_members_remove: "member3@i2btech.com"
 '''
 
 RETURN = r'''
@@ -99,8 +130,9 @@ def run_module():
         groups_definition=dict(type="list", required=True, elements="dict"),
         groups_types=dict(type="list", required=True, elements="dict"),
         groups=dict(type="list", elements="str", required=False, default=[]),
-        smg_admin=dict(type="str", required=False),
-        smg_members=dict(type="str", required=False)
+        smg_admin_requester=dict(type="str", required=False, default=None),
+        smg_members_add=dict(type="str", required=False, default=""),
+        smg_members_remove=dict(type="str", required=False, default="")
     )
 
     # seed the result dict in the object
@@ -141,12 +173,6 @@ def run_module():
         result_action = gws.check_config()
     if module.params['action'] == "create_update":
         result_action = gws.create_update()
-    if module.params['action'] == "smg_create_update":
-        result_action = gws.smg_create_update()
-    if module.params['action'] == "smg_add_member":
-        result_action = gws.smg_add_member()
-    if module.params['action'] == "smg_remove_member":
-        result_action = gws.smg_remove_member()
 
     result['message'] = result_action["message"]
     result['changed'] = result_action["changed"]
