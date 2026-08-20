@@ -1,0 +1,3 @@
+---
+jira_user: "{{ lookup('ansible.builtin.env', 'JIRA_USER') }}"
+jira_pass: "{{ lookup('ansible.builtin.env', 'JIRA_PASS') }}"
