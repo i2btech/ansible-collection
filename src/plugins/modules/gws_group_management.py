@@ -26,7 +26,7 @@ options:
         default: 'credential.json'
     action:
         description:
-          - Action to perform: check|create_update
+          - Action to perform: check|create_update|smg_create_update|smg_add_member|smg_remove_member
         type: str
         required: true
     used_by:
@@ -53,6 +53,16 @@ options:
           - A list of groups to update their signature.
         type: list
         elements: str
+        required: false
+    smg_admin:
+        description:
+          - User that is requeting the action, they need to the a group admin.
+        type: str
+        required: false
+    smg_members:
+        description:
+          - List separated by commas of email user that need to be added or removed from group.
+        type: str
         required: false
 
 author:
@@ -88,7 +98,9 @@ def run_module():
         used_by=dict(type="str", required=False),
         groups_definition=dict(type="list", required=True, elements="dict"),
         groups_types=dict(type="list", required=True, elements="dict"),
-        groups=dict(type="list", elements="str", required=False, default=[])
+        groups=dict(type="list", elements="str", required=False, default=[]),
+        smg_admin=dict(type="str", required=False),
+        smg_members=dict(type="str", required=False)
     )
 
     # seed the result dict in the object
@@ -129,6 +141,12 @@ def run_module():
         result_action = gws.check_config()
     if module.params['action'] == "create_update":
         result_action = gws.create_update()
+    if module.params['action'] == "smg_create_update":
+        result_action = gws.smg_create_update()
+    if module.params['action'] == "smg_add_member":
+        result_action = gws.smg_add_member()
+    if module.params['action'] == "smg_remove_member":
+        result_action = gws.smg_remove_member()
 
     result['message'] = result_action["message"]
     result['changed'] = result_action["changed"]
