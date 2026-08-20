@@ -31,36 +31,15 @@
           - group.users@i2btech.com
       tags: create_update
 
-    - name: Test creation of self managed group # this don't add members
+    - name: Test create/update action for self managed group
       i2btech.ops.gws_group_management:
-        action: "smg_create_update"
+        action: "create_update"
         used_by: "admin@i2btech.com"
         groups_definition: "{{ gws_groups }}"
         groups_types: "{{ gws_group_types }}"
         groups:
           - group.users@i2btech.com
+        smg_admin_requester: leader1.name@i2btech.com
+        smg_members_add: "member1@i2btech.com,member2@i2btech.com"
+        smg_members_remove: "member1@i2btech.com,member2@i2btech.com"
       tags: smg_create_update
-
-    - name: Test add member to self managed group
-      i2btech.ops.gws_group_management:
-        action: "smg_add_member"
-        used_by: "admin@i2btech.com"
-        groups_definition: "{{ gws_groups }}"
-        groups_types: "{{ gws_group_types }}"
-        groups:
-          - group.users@i2btech.com
-        smg_admin: leader1.name@i2btech.com
-        smg_members: "member1@i2btech.com,member2@i2btech.com"
-      tags: smg_add_member
-
-    - name: Test delete member of self managed group
-      i2btech.ops.gws_group_management:
-        action: "smg_remove_member"
-        used_by: "admin@i2btech.com"
-        groups_definition: "{{ gws_groups }}"
-        groups_types: "{{ gws_group_types }}"
-        groups:
-          - group.users@i2btech.com
-        smg_admin: leader1.name@i2btech.com
-        smg_members: "member1@i2btech.com,member2@i2btech.com"
-      tags: smg_remove_member

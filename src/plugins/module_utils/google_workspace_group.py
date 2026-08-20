@@ -338,36 +338,3 @@ class GoogleWorkspaceGroupHelper:
             result = str(error)
 
         return result
-
-    def smg_create_update(self):
-        result = {
-            "changed": False,
-            "failed": False,
-            "message": []
-        }
-
-        return result
-
-    def smg_add_member(self):
-        result = {
-            "changed": False,
-            "failed": False,
-            "message": [{
-                "customer_message": "todo OK",
-                "issue": "https://jira/issue_id"
-            }]
-        }
-
-        return result
-
-    def smg_remove_member(self):
-        result = {
-            "changed": False,
-            "failed": True,
-            "message": [{
-                "customer_message": "Se produjo un error ...",
-                "issue": "https://jira/issue_id"
-            }]
-        }
-
-        return result
