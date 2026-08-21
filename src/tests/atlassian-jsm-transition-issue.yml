@@ -1,0 +1,31 @@
+- name: "JSM - Transition issue"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/jira.yml
+
+  tasks:
+
+    - name: Test transition to "Trabajo en curso"
+      i2btech.ops.atlassian_jsm_transition_issue:
+        jira_username: "{{ jira_user }}"
+        jira_password: "{{ jira_pass }}"
+        issue_url: "https://your-domain.atlassian.net/browse/XXX-000"
+        issue_status: "Trabajo en curso"
+        comment: "Se produjo un error que necesita tu atención: xxx" # mensaje interno ya que se está asignando el ticket a humano
+        issue_assignee: "human.agent@your-domain.com"
+      tags: error
+
+    - name: Test transition to "Completado"
+      i2btech.ops.atlassian_jsm_transition_issue:
+        jira_username: "{{ jira_user }}"
+        jira_password: "{{ jira_pass }}"
+        issue_url: "https://your-domain.atlassian.net/browse/XXX-000"
+        issue_status: "Completado"
+        comment: "Requerimiento completado" # mensaje para customer ya que se está cerrando el ticket
+        issue_resolution: "Done" # requerido ya que se esta cerrando ticket
+      tags: ok
