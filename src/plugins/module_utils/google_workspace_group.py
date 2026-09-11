@@ -143,8 +143,7 @@ class GoogleWorkspaceGroupHelper:
         ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes,
-            subject=self.module.params['used_by'])
+            scopes=target_scopes)
         service_directory = build("admin", "directory_v1", credentials=credentials)
 
         # auth google
@@ -400,17 +399,13 @@ class GoogleWorkspaceGroupHelper:
     def check_if_exists(self, service, group):
         result = "NONE"
         try:
-            results = (
-                service.groups()
-                .get(groupKey=group)
-                .execute()
-            )
-            result = "TRUE"
-        except errors.HttpError as error:
-            if str(error.status_code) == "404":
-                result = "FALSE"
-            else:
-                result = str(error.error_details)
+            results = service.groups().list(
+                customer="C03yd4430",
+                query=f"email={group}",
+                maxResults=1,
+            ).execute()
+            groups = results.get("groups", [])
+            return ("TRUE") if groups else ("FALSE")
         except Exception as error:
             result = str(error)
 
