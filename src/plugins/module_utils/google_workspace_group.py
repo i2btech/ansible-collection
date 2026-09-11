@@ -400,7 +400,7 @@ class GoogleWorkspaceGroupHelper:
         result = "NONE"
         try:
             results = service.groups().list(
-                customer="C03yd4430",
+                customer="xxx",
                 query=f"email={group}",
                 maxResults=1,
             ).execute()

@@ -47,8 +47,7 @@ class GoogleWorkspaceUserHelper:
         target_scopes_security = ["https://www.googleapis.com/auth/admin.directory.user.security"]
         credentials_security = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes_security,
-            subject=self.module.params['used_by'])
+            scopes=target_scopes_security)
         service_signout = build("admin", "directory_v1", credentials=credentials_security)
 
         if (len(self.module.params['users']) == 0) and len(users_from_groups) == 0:
@@ -169,8 +168,7 @@ class GoogleWorkspaceUserHelper:
         ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes,
-            subject=self.module.params['used_by'])
+            scopes=target_scopes)
         service_directory = build("admin", "directory_v1", credentials=credentials)
 
         # get list of users that need to be created/updated
@@ -206,17 +204,13 @@ class GoogleWorkspaceUserHelper:
     def check_if_exists(self, service, user):
         result = "NONE"
         try:
-            results = (
-                service.users()
-                .get(userKey=user)
-                .execute()
-            )
-            result = "TRUE"
-        except errors.HttpError as error:
-            if str(error.status_code) == "404":
-                result = "FALSE"
-            else:
-                result = str(error.error_details)
+            results = service.users().list(
+                customer="xxx",
+                query=f"email={user}",
+                maxResults=1,
+            ).execute()
+            users = results.get("users", [])
+            return ("TRUE") if users else ("FALSE")
         except Exception as error:
             result = str(error)
 
@@ -292,7 +286,10 @@ class GoogleWorkspaceUserHelper:
             current_memberships = []
             results = (
                 service_directory.groups()
-                .list(userKey=user["mail"])
+                .list(
+                    domain="xxx",
+                    userKey=user["mail"]
+                )
                 .execute()
             )
             if "groups" in results:
