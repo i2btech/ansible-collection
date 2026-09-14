@@ -14,6 +14,8 @@
     - name: Test check action
       i2btech.ops.gws_group_management:
         action: "check"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         groups_definition: "{{ gws_groups }}"
         groups_types: "{{ gws_group_types }}"
         groups:
@@ -24,7 +26,8 @@
     - name: Test create/update action
       i2btech.ops.gws_group_management:
         action: "create_update"
-        used_by: "admin@i2btech.com"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         groups_definition: "{{ gws_groups }}"
         groups_types: "{{ gws_group_types }}"
         groups:
@@ -34,7 +37,8 @@
     - name: Test create/update action for self managed group
       i2btech.ops.gws_group_management:
         action: "create_update"
-        used_by: "admin@i2btech.com"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         groups_definition: "{{ gws_groups }}"
         groups_types: "{{ gws_group_types }}"
         groups:

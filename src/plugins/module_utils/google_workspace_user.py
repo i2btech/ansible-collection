@@ -37,7 +37,8 @@ class GoogleWorkspaceUserHelper:
         target_scopes = ["https://www.googleapis.com/auth/admin.directory.group.readonly"]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes)
+            scopes=target_scopes,
+            subject=self.module.params['impersonated_user'])
         service_members = build("admin", "directory_v1", credentials=credentials)
 
         if self.module.params['groups'] is not None:
@@ -48,7 +49,7 @@ class GoogleWorkspaceUserHelper:
         credentials_security = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
             scopes=target_scopes_security,
-            subject=self.module.params['used_by'])
+            subject=self.module.params['impersonated_user'])
         service_signout = build("admin", "directory_v1", credentials=credentials_security)
 
         if (len(self.module.params['users']) == 0) and len(users_from_groups) == 0:
@@ -169,8 +170,7 @@ class GoogleWorkspaceUserHelper:
         ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes,
-            subject=self.module.params['used_by'])
+            scopes=target_scopes)
         service_directory = build("admin", "directory_v1", credentials=credentials)
 
         # get list of users that need to be created/updated
@@ -192,9 +192,9 @@ class GoogleWorkspaceUserHelper:
                 if user in members_list:
                    groups_to_be_added.append(group["mail"])
 
-            IF_EXIST_RES=self.check_if_exists(service_directory, user)
+            IF_EXIST_RES=self.check_if_exists(service_directory, user, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
-                result = self.update(service_directory, user_definition, groups_to_be_added)
+                result = self.update(service_directory, user_definition, groups_to_be_added, self.module.params['domain_name'])
             elif IF_EXIST_RES == "FALSE":
                 result = self.create(service_directory, user_definition, groups_to_be_added)
             else:
@@ -203,20 +203,16 @@ class GoogleWorkspaceUserHelper:
 
         return result
 
-    def check_if_exists(self, service, user):
+    def check_if_exists(self, service, user, customer_id):
         result = "NONE"
         try:
-            results = (
-                service.users()
-                .get(userKey=user)
-                .execute()
-            )
-            result = "TRUE"
-        except errors.HttpError as error:
-            if str(error.status_code) == "404":
-                result = "FALSE"
-            else:
-                result = str(error.error_details)
+            results = service.users().list(
+                customer=customer_id,
+                query=f"email={user}",
+                maxResults=1,
+            ).execute()
+            users = results.get("users", [])
+            return ("TRUE") if users else ("FALSE")
         except Exception as error:
             result = str(error)
 
@@ -264,7 +260,7 @@ class GoogleWorkspaceUserHelper:
         return result
 
 
-    def update(self, service_directory, user, groups_to_be_added):
+    def update(self, service_directory, user, groups_to_be_added, domain_name):
         result = {
             "changed": False,
             "failed": False,
@@ -292,7 +288,10 @@ class GoogleWorkspaceUserHelper:
             current_memberships = []
             results = (
                 service_directory.groups()
-                .list(userKey=user["mail"])
+                .list(
+                    domain=domain_name,
+                    userKey=user["mail"]
+                )
                 .execute()
             )
             if "groups" in results:

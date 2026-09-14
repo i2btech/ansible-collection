@@ -14,7 +14,10 @@
     - name: Test action signout
       i2btech.ops.gws_user_management:
         action: "signout"
-        used_by: "admin@i2btech.com"
+        credential_file: "credential_dwd.json"
+        impersonated_user: "admin@i2btech.com"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         users:
           - "user@i2btech.com"
         groups:
@@ -24,6 +27,9 @@
     - name: Test action signature
       i2btech.ops.gws_user_management:
         action: "signature"
+        credential_file: "credential_dwd.json"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         users_definition: "{{ gws_users }}"
         groups_definition: "{{ gws_groups }}"
         signature_folder: "{{ playbook_dir }}/templates/signatures"
@@ -36,9 +42,10 @@
     - name: Test action create_update
       i2btech.ops.gws_user_management:
         action: "create_update"
+        customer_id: "C000000001"
+        domain_name: "i2btech.com"
         users_definition: "{{ gws_users }}"
         groups_definition: "{{ gws_groups }}"
-        used_by: "admin@i2btech.com"
         users:
           - "user.name@i2btech.com"
       tags: create_update

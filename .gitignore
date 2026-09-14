@@ -1,4 +1,5 @@
 .ansible
 .env
 credential.json
+credential_dwd.json
 *.bak

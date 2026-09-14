@@ -38,7 +38,7 @@ class GoogleWorkspaceGroupHelper:
         )
         members = results.get("members", [])
         user_list = []
-        if len(members) > 1:
+        if len(members) > 0:
             for member in members:
                 user_list.append(member['email'])
 
@@ -143,8 +143,7 @@ class GoogleWorkspaceGroupHelper:
         ]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes,
-            subject=self.module.params['used_by'])
+            scopes=target_scopes)
         service_directory = build("admin", "directory_v1", credentials=credentials)
 
         # auth google
@@ -214,7 +213,7 @@ class GoogleWorkspaceGroupHelper:
                     )
                     break
 
-            IF_EXIST_RES=self.check_if_exists(service_directory, group)
+            IF_EXIST_RES=self.check_if_exists(service_directory, group, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
                 result = self.update(service_directory, group_definition, type_definition, service_grp_settings)
             elif IF_EXIST_RES == "FALSE":
@@ -397,20 +396,16 @@ class GoogleWorkspaceGroupHelper:
         return result
 
 
-    def check_if_exists(self, service, group):
+    def check_if_exists(self, service, group, customer_id):
         result = "NONE"
         try:
-            results = (
-                service.groups()
-                .get(groupKey=group)
-                .execute()
-            )
-            result = "TRUE"
-        except errors.HttpError as error:
-            if str(error.status_code) == "404":
-                result = "FALSE"
-            else:
-                result = str(error.error_details)
+            results = service.groups().list(
+                customer=customer_id,
+                query=f"email={group}",
+                maxResults=1,
+            ).execute()
+            groups = results.get("groups", [])
+            return ("TRUE") if groups else ("FALSE")
         except Exception as error:
             result = str(error)
 
