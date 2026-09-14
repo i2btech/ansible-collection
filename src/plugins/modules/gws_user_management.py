@@ -29,11 +29,16 @@ options:
           - Action to perform: signature|signout
         type: str
         required: true
-    used_by:
+    customer_id:
         description:
-          - User in the domain with access to use the service account.
+          - Customer ID in Google Worspace
         type: str
-        required: false
+        required: true
+    domain_name:
+        description:
+          - Google Workspace domain currently being worked on.
+        type: str
+        required: true
     signature_folder:
         description:
           - Full path to folder where jinja2 template of signature is located.
@@ -76,7 +81,8 @@ EXAMPLES = r'''
 - name: Test action signout
     i2btech.ops.gws_user_management:
     action: "signout"
-    used_by: "admin@i2btech.com"
+    customer_id: "C0000000001"
+    domain_name: "i2btech.com"
     users:
         - "user@i2btech.com"
     groups:
@@ -86,6 +92,8 @@ EXAMPLES = r'''
 - name: Test action signature
     i2btech.ops.gws_user_management:
     action: "signature"
+    customer_id: "C0000000001"
+    domain_name: "i2btech.com"
     users_definition: "{{ gws_users }}"
     groups_definition: "{{ gws_groups }}"
     signature_folder: "{{ playbook_dir }}/templates/signatures"
@@ -94,10 +102,12 @@ EXAMPLES = r'''
     groups:
         - "group.users@i2btech.com"
     tags: signature
+
 - name: Test action create_update
     i2btech.ops.gws_user_management:
     action: "create_update"
-    used_by: "admin@i2btech.com"
+    customer_id: "C0000000001"
+    domain_name: "i2btech.com"
     users_definition: "{{ gws_users }}"
     groups_definition: "{{ gws_groups }}"
     users:
@@ -121,7 +131,8 @@ def run_module():
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
         action=dict(type="str", required=True),
-        used_by=dict(type="str", required=False),
+        customer_id=dict(type="str", required=True),
+        domain_name=dict(type="str", required=True),
         signature_folder=dict(type="str", required=False),
         users_definition=dict(type="list", required=False, elements="dict"),
         groups_definition=dict(type="list", required=False, elements="dict"),

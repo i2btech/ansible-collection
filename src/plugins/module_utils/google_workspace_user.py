@@ -190,9 +190,9 @@ class GoogleWorkspaceUserHelper:
                 if user in members_list:
                    groups_to_be_added.append(group["mail"])
 
-            IF_EXIST_RES=self.check_if_exists(service_directory, user)
+            IF_EXIST_RES=self.check_if_exists(service_directory, user, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
-                result = self.update(service_directory, user_definition, groups_to_be_added)
+                result = self.update(service_directory, user_definition, groups_to_be_added, self.module.params['domain_name'])
             elif IF_EXIST_RES == "FALSE":
                 result = self.create(service_directory, user_definition, groups_to_be_added)
             else:
@@ -201,11 +201,11 @@ class GoogleWorkspaceUserHelper:
 
         return result
 
-    def check_if_exists(self, service, user):
+    def check_if_exists(self, service, user, customer_id):
         result = "NONE"
         try:
             results = service.users().list(
-                customer="xxx",
+                customer=customer_id,
                 query=f"email={user}",
                 maxResults=1,
             ).execute()
@@ -258,7 +258,7 @@ class GoogleWorkspaceUserHelper:
         return result
 
 
-    def update(self, service_directory, user, groups_to_be_added):
+    def update(self, service_directory, user, groups_to_be_added, domain_name):
         result = {
             "changed": False,
             "failed": False,
@@ -287,7 +287,7 @@ class GoogleWorkspaceUserHelper:
             results = (
                 service_directory.groups()
                 .list(
-                    domain="xxx",
+                    domain=domain_name,
                     userKey=user["mail"]
                 )
                 .execute()
