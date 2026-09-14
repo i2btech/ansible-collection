@@ -29,6 +29,11 @@ options:
           - Action to perform: signature|signout
         type: str
         required: true
+    impersonated_user:
+        description:
+          - Admin user to be impersonated.
+        type: str
+        required: false
     customer_id:
         description:
           - Customer ID in Google Worspace
@@ -131,6 +136,7 @@ def run_module():
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
         action=dict(type="str", required=True),
+        impersonated_user=dict(type="str", required=False),
         customer_id=dict(type="str", required=True),
         domain_name=dict(type="str", required=True),
         signature_folder=dict(type="str", required=False),

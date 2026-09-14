@@ -37,7 +37,8 @@ class GoogleWorkspaceUserHelper:
         target_scopes = ["https://www.googleapis.com/auth/admin.directory.group.readonly"]
         credentials = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes)
+            scopes=target_scopes,
+            subject=self.module.params['impersonated_user'])
         service_members = build("admin", "directory_v1", credentials=credentials)
 
         if self.module.params['groups'] is not None:
@@ -47,7 +48,8 @@ class GoogleWorkspaceUserHelper:
         target_scopes_security = ["https://www.googleapis.com/auth/admin.directory.user.security"]
         credentials_security = service_account.Credentials.from_service_account_file(
             self.module.params['credential_file'],
-            scopes=target_scopes_security)
+            scopes=target_scopes_security,
+            subject=self.module.params['impersonated_user'])
         service_signout = build("admin", "directory_v1", credentials=credentials_security)
 
         if (len(self.module.params['users']) == 0) and len(users_from_groups) == 0:
