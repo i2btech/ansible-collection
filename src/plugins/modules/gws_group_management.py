@@ -29,11 +29,16 @@ options:
           - Action to perform: check|create_update
         type: str
         required: true
-    used_by:
+    customer_id:
         description:
-          - User in the domain with access to use the service account.
+          - Customer ID in Google Worspace
         type: str
-        required: false
+        required: true
+    domain_name:
+        description:
+          - Google Workspace domain currently being worked on.
+        type: str
+        required: true
     groups_definition:
         description:
             - A list of groups.
@@ -92,6 +97,8 @@ EXAMPLES = r'''
 - name: Test check action
     i2btech.ops.gws_group_management:
     action: "check"
+    customer_id: "C0000000001"
+    domain_name: "i2btech.com"
     groups_definition: "{{ gws_groups }}"
     groups_types: "{{ gws_group_types }}"
     group:
@@ -100,7 +107,8 @@ EXAMPLES = r'''
 - name: Add/remove members of a self managed group
     i2btech.ops.gws_group_management:
     action: "create_update"
-    used_by: "admin@i2btech.com"
+    customer_id: "C0000000001"
+    domain_name: "i2btech.com"
     groups_definition: "{{ gws_groups }}"
     groups_types: "{{ gws_group_types }}"
     groups:
@@ -126,7 +134,8 @@ def run_module():
     module_args = dict(
         credential_file=dict(type="str", default="credential.json"),
         action=dict(type="str", required=True),
-        used_by=dict(type="str", required=False),
+        customer_id=dict(type="str", required=True),
+        domain_name=dict(type="str", required=True),
         groups_definition=dict(type="list", required=True, elements="dict"),
         groups_types=dict(type="list", required=True, elements="dict"),
         groups=dict(type="list", elements="str", required=False, default=[]),

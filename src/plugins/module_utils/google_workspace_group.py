@@ -213,7 +213,7 @@ class GoogleWorkspaceGroupHelper:
                     )
                     break
 
-            IF_EXIST_RES=self.check_if_exists(service_directory, group)
+            IF_EXIST_RES=self.check_if_exists(service_directory, group, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
                 result = self.update(service_directory, group_definition, type_definition, service_grp_settings)
             elif IF_EXIST_RES == "FALSE":
@@ -396,11 +396,11 @@ class GoogleWorkspaceGroupHelper:
         return result
 
 
-    def check_if_exists(self, service, group):
+    def check_if_exists(self, service, group, customer_id):
         result = "NONE"
         try:
             results = service.groups().list(
-                customer="xxx",
+                customer=customer_id,
                 query=f"email={group}",
                 maxResults=1,
             ).execute()
