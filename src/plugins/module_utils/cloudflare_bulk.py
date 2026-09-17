@@ -20,9 +20,7 @@ from ansible.module_utils.urls import fetch_url
 
 error_messages = {
     'file_not_found': 'File `{filename}` was not found.',
-    'empty_payload': 'Empty payload list. Nothing to process from `{filename}`.',
     'cf_api_error': 'Cloudflare API error during {action}: {error}',
-    'unknown_error': 'An unknown error happened: {info}',
 }
 
 class CloudflareBulkHelper:
@@ -179,11 +177,6 @@ class CloudflareBulkHelper:
                             self.payload_put.append(item_data)
                     else:
                         self.payload_post.append(item_data)
-
-            if not self.payload_post and not self.payload_put:
-                self.module.fail_json(
-                    msg=error_messages['empty_payload'].format(filename=self.filename)
-                )
                         
         except FileNotFoundError:
             self.module.fail_json(
@@ -198,6 +191,11 @@ class CloudflareBulkHelper:
         Add or update items in bulk to the Cloudflare List.
         """
         self.read_file()
+
+        if not self.payload_post and not self.payload_put:
+            return False
+
+        
         url = self.CF_API_ENDPOINTS['list_items'].format(
             account_id=self.account_id,
             list_id=self.list_id

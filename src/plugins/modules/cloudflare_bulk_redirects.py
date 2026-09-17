@@ -132,9 +132,13 @@ def run_module():
     bulk = CloudflareBulkHelper(module)
 
     bulk.verify_credentials()
-    bulk.add_item_bulk_list()
+    status = bulk.add_item_bulk_list()
 
-    module.exit_json(changed=True, msg="Bulk redirects updated successfully")
+    if status:
+        module.exit_json(changed=True, msg="Bulk redirects updated successfully")
+    else:
+        module.exit_json(changed=False, msg="No new or modified redirects to process. Cloudflare list is already up to date.")
+
 
 def main():
     """ main function """
