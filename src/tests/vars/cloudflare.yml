@@ -1,0 +1,4 @@
+---
+cloudflare_account: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_ACCOUNT_ID') }}"
+cloudflare_api_token: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_API_TOKEN') }}"
+cloudflare_list_id: "{{ lookup('ansible.builtin.env', 'CLOUDFLARE_LIST_ID') }}"

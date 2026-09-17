@@ -1,0 +1,40 @@
+- name: "Cloudflare Bulk Redirects Module"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+    - vars/cloudflare.yml
+
+  tasks:
+    - name: Sincronizar redirecciones desde CSV (First Run)
+      i2btech.ops.cloudflare_bulk_redirects:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        cloudflare_filename: "redirects.csv"
+        replace_existing: false
+
+    - name: Volver a ejecutar sin 'replace_existing' (Idempotencia)
+      i2btech.ops.cloudflare_bulk_redirects:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        cloudflare_filename: "redirects.csv"
+        replace_existing: false
+
+    - name: Forzar actualización con replace_existing=True
+      i2btech.ops.cloudflare_bulk_redirects:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        cloudflare_filename: "redirects.csv"
+        replace_existing: true
+
+    - name: Probar fallo controlado cuando el archivo no existe
+      i2btech.ops.cloudflare_bulk_redirects:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        cloudflare_filename: "archivo_inexistente.csv"
