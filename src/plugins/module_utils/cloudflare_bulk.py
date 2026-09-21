@@ -40,6 +40,7 @@ class CloudflareBulkHelper:
         self.api_token = module.params['cloudflare_api_token']
         self.list_id = module.params.get('cloudflare_list_id')
         self.filename = module.params.get('cloudflare_filename')
+        self.backup_filename = module.params.get('cloudflare_backup_filename')
         self.replace_existing = module.params.get('replace_existing', False)
 
         self.payload_post = []
@@ -66,6 +67,10 @@ class CloudflareBulkHelper:
             cloudflare_filename=dict(
                 type='str',
                 required=True),
+            cloudflare_backup_filename=dict(
+                type='str',
+                default='backup_list_bulk_redirects.csv',
+                required=False),
             replace_existing=dict(
                 type='bool',
                 default=False),
@@ -129,12 +134,35 @@ class CloudflareBulkHelper:
 
         return info, content
 
+    def backup(self, items):
+        """
+        Generate a local CSV backup containing all existing Cloudflare list items.
+        """
+        try:
+            filepath = self.backup_filename
+            if not os.path.isabs(filepath):
+                filepath = os.path.join(os.getcwd(), filepath)
+
+            with open(filepath, 'w', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(['origen', 'destino', 'preserve query string'])
+                writer.writerows(
+                    (
+                        item['redirect']['source_url'],
+                        item['redirect']['target_url'],
+                        item['redirect']['preserve_query_string']
+                    )
+                    for item in items if 'redirect' in item
+                )
+        except Exception as e:
+            self.module.warn(f"Failed to write local backup file '{self.backup_filename}': {str(e)}")
+
     def read_file(self):
         """
         Read CSV file and build payloads for POST and PUT
         """
         try:
-            existing_items = self.get_items_list()
+            existing_items_source, existing_items_target = self.get_items_list()
             local_sources = set()
 
             filepath = self.filename
@@ -171,9 +199,9 @@ class CloudflareBulkHelper:
                         }
                     }
 
-                    if source in existing_items:
-                        if self.replace_existing:
-                            item_data["id"] = existing_items[source]
+                    if source in existing_items_source:
+                        if self.replace_existing or target not in existing_items_target:
+                            item_data["id"] = existing_items_source[source]
                             self.payload_put.append(item_data)
                     else:
                         self.payload_post.append(item_data)
@@ -283,7 +311,9 @@ class CloudflareBulkHelper:
         """
         Fetch existing items from the specified Cloudflare List using pagination.
         """
-        existing_items = {}
+        existing_items_source = {}
+        existing_items_target = {}
+        all_raw_items = []
         cursor = None
         per_page = 100
 
@@ -305,16 +335,27 @@ class CloudflareBulkHelper:
             if not result:
                 break
 
+            all_raw_items.extend(result)
+
             for item in result:
-                source = item['redirect']['source_url']
-                item_id = item['id']
-                existing_items[source] = item_id
+                redirect = item.get('redirect', {})
+                source = redirect.get('source_url')
+                target = redirect.get('target_url')
+                item_id = item.get('id')
+
+                if source and item_id:
+                    existing_items_source[source] = item_id
+                if target and item_id:
+                    existing_items_target[target] = item_id
 
             cursor = response_json.get('result_info', {}).get('cursors', {}).get('after')
             if not cursor:
                 break
 
-        return existing_items
+        if all_raw_items:
+            self.backup(all_raw_items)
+
+        return existing_items_source, existing_items_target
 
     @staticmethod
     def is_home(url):
