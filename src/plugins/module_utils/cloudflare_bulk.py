@@ -13,10 +13,15 @@ import time
 from urllib.parse import urlencode, urlparse
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.urls import fetch_url
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account
 
 #
 # class: CloudflareBulkHelper
 #
+
+MAX_ALLOWED_REDIRECTS = 10
 
 error_messages = {
     'file_not_found': 'File `{filename}` was not found.',
@@ -42,6 +47,11 @@ class CloudflareBulkHelper:
         self.filename = module.params.get('cloudflare_filename')
         self.backup_filename = module.params.get('cloudflare_backup_filename')
         self.replace_existing = module.params.get('replace_existing', False)
+        self.force_bulk = module.params.get('force_bulk', False)
+
+        self.google_drive_folder_id = module.params.get('google_drive_folder_id')
+        self.google_credential_file = module.params.get('google_credential_file')
+        self.google_impersonated_user = module.params.get('google_impersonated_user')
 
         self.payload_post = []
         self.payload_put = []
@@ -71,9 +81,23 @@ class CloudflareBulkHelper:
                 type='str',
                 default='backup_list_bulk_redirects.csv',
                 required=False),
+            google_drive_folder_id=dict(
+                type='str',
+                required=False),
+            google_credential_file=dict(
+                type='path',
+                default='credential.json',
+                required=False),
+            google_impersonated_user=dict(
+                type='str',
+                required=False),
             replace_existing=dict(
                 type='bool',
                 default=False),
+            force_bulk=dict(
+                type='bool',
+                default=False,
+                required=False),
             validate_certs=dict(
                 type='bool',
                 default=True),
@@ -134,6 +158,47 @@ class CloudflareBulkHelper:
 
         return info, content
 
+    def upload_to_gdrive(self, local_filepath):
+        """
+        Upload local backup file to specified Google Drive Folder using Service Account credentials.
+        """
+
+        try:
+            target_scopes = ['https://www.googleapis.com/auth/drive.file']
+            credentials = service_account.Credentials.from_service_account_file(
+                self.google_credential_file,
+                scopes=target_scopes
+            )
+
+            # Apply domain-wide delegation if impersonated user is provided
+            if self.google_impersonated_user:
+                credentials = credentials.with_subject(self.google_impersonated_user)
+
+            # Essential: cache_discovery=False prevents external discovery document network failures
+            service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
+
+            file_metadata = {
+                'name': os.path.basename(local_filepath),
+                'parents': [self.google_drive_folder_id]
+            }
+
+            media = MediaFileUpload(local_filepath, mimetype='text/csv')
+
+            uploaded_file = service.files().create(
+                body=file_metadata,
+                media_body=media,
+                supportsAllDrives=True,
+                fields='id, webViewLink'
+            ).execute()
+
+            self.module.warn(
+                f"[INFO] Backup successfully exported to Drive! URL: {uploaded_file.get('webViewLink', 'N/A')}"
+            )
+
+        except Exception as drive_err:
+            # Emit a warning instead of halting execution so Cloudflare logic isn't broken
+            self.module.warn(f"[WARN] Drive export skipped or failed: {str(drive_err)}")
+
     def backup(self, items):
         """
         Generate a local CSV backup containing all existing Cloudflare list items.
@@ -154,6 +219,11 @@ class CloudflareBulkHelper:
                     )
                     for item in items if 'redirect' in item
                 )
+
+            # Upload to Google Drive if required parameters are configured
+            if self.google_drive_folder_id and self.google_credential_file:
+                self.upload_to_gdrive(filepath)
+                
         except Exception as e:
             self.module.warn(f"Failed to write local backup file '{self.backup_filename}': {str(e)}")
 
@@ -205,6 +275,15 @@ class CloudflareBulkHelper:
                             self.payload_put.append(item_data)
                     else:
                         self.payload_post.append(item_data)
+
+            total_items_to_process = len(self.payload_post) + len(self.payload_put)
+
+            if total_items_to_process > MAX_ALLOWED_REDIRECTS and not self.force_bulk:
+                self.module.fail_json(
+                    msg=f"SAFETY STOP: Attempting to process {total_items_to_process} redirects, "
+                        f"which exceeds the safety threshold of {MAX_ALLOWED_REDIRECTS}. "
+                        f"To bypass this check, set 'force_bulk: true' in your Ansible task options."
+                )
                         
         except FileNotFoundError:
             self.module.fail_json(

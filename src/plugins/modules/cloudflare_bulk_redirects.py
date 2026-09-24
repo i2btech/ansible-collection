@@ -15,7 +15,7 @@ version_added: "1.0.0"
 description:
     - Manage and synchronize Cloudflare Bulk Redirect Lists by reading target/source pairs from a CSV file.
     - Fetch existing rules from the specified list, delete items that need replacement, and create new redirect items.
-    - Handles asynchronous operations from Cloudflare until they complete successfully.
+    - Generates a local backup CSV file and optionally uploads it to Google Drive using impersonation if configured.
 options:
     cloudflare_account:
         description:
@@ -37,11 +37,38 @@ options:
             - Name of the CSV file containing the source and target URL pairs.
         type: str
         required: true
+    cloudflare_backup_filename:
+        description:
+            - Filename for the local CSV backup created before modifying existing items.
+        type: str
+        default: "backup_list_bulk_redirects.csv"
+        required: false
+    google_drive_folder_id:
+        description:
+            - ID of the Google Drive Folder where the backup CSV will be uploaded.
+        type: str
+        required: false
+    google_credential_file:
+        description:
+            - Path to the JSON service account credential file for Google Drive API.
+        type: path
+        required: false
+    google_impersonated_user:
+        description:
+            - Email address of the user to impersonate for Domain-Wide Delegation.
+        type: str
+        required: false
     replace_existing:
         description:
             - Whether to replace/update items in the Cloudflare list if the source URL already exists.
         type: bool
         default: false
+    force_bulk:
+        description:
+            - Bypass safety limit validation (10 redirects) to allow bulk processing of large redirect sets.
+        type: bool
+        default: false
+        required: false
     validate_certs:
         description:
             - Whether to validate SSL certificates when contacting the Cloudflare API.
@@ -63,20 +90,25 @@ options:
         type: int
         default: 3
 notes:
-    - The CSV file path is relative to the directory where the playbook is executed (typically at the same level as the playbook).
+    - The CSV file path is relative to the directory where the playbook is executed.
     - In check mode, no API calls are made and the module reports C(changed=false).
+    - If processing more than 10 redirects, C(force_bulk: true) must be explicitly set.
 author:
     - IT I2B (it@i2btech.com)
 '''
 
 EXAMPLES = r'''
-- name: Synchronize bulk redirects to Cloudflare
+- name: Synchronize bulk redirects with Google Drive Backup using Impersonation
   i2btech.ops.cloudflare_bulk_redirects:
     cloudflare_account: "{{ cloudflare_account }}"
     cloudflare_api_token: "{{ cloudflare_api_token }}"
     cloudflare_list_id: "abc123xyz456"
     cloudflare_filename: "redirects.csv"
     replace_existing: true
+    force_bulk: true
+    google_drive_folder_id: "1A2b3C4d5E6f7G8h9I0J"
+    google_credential_file: "{{ playbook_dir }}/credential.json"
+    google_impersonated_user: "admin@domain.com"
 '''
 
 RETURN = r'''

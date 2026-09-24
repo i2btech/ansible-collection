@@ -8,20 +8,35 @@
     - vars/cloudflare.yml
 
   tasks:
+
     - name: Agregar redirecciones desde CSV
       i2btech.ops.cloudflare_bulk_redirects:
         cloudflare_account: "{{ cloudflare_account }}"
         cloudflare_api_token: "{{ cloudflare_api_token }}"
         cloudflare_list_id: "{{ cloudflare_list_id }}"
+        google_drive_folder_id: "{{ google_drive_folder_id }}"
+        google_impersonated_user: "{{ google_impersonated_user }}"
         cloudflare_filename: "redirects.csv"
-        replace_existing: false
       tags: add
+
+    - name: Agregar redirecciones desde CSV con force_bulk=True
+      i2btech.ops.cloudflare_bulk_redirects:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        google_drive_folder_id: "{{ google_drive_folder_id }}"
+        google_impersonated_user: "{{ google_impersonated_user }}"
+        cloudflare_filename: "redirects.csv"
+        force_bulk: true
+      tags: add-force
 
     - name: Forzar actualización con replace_existing=True
       i2btech.ops.cloudflare_bulk_redirects:
         cloudflare_account: "{{ cloudflare_account }}"
         cloudflare_api_token: "{{ cloudflare_api_token }}"
         cloudflare_list_id: "{{ cloudflare_list_id }}"
+        google_drive_folder_id: "{{ google_drive_folder_id }}"
+        google_impersonated_user: "{{ google_impersonated_user }}"
         cloudflare_filename: "redirects.csv"
         replace_existing: true
       tags: replace
