@@ -20,6 +20,7 @@ Now you can start the devcontainer.
 - [Google Workspace](src/README.gws.md)
 - [AWS](src/README.aws.md)
 - [Atlassian](src/README.atlassian.md)
+- [Cloudflare](src/README.cloudflare.md)
 
 # Roles
 
