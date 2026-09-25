@@ -46,6 +46,7 @@ class CloudflareBulkHelper:
         self.list_id = module.params.get('cloudflare_list_id')
         self.filename = module.params.get('cloudflare_filename')
         self.backup_filename = module.params.get('cloudflare_backup_filename')
+        self.target_domain = module.params.get('target_domain')
         self.replace_existing = module.params.get('replace_existing', False)
         self.force_bulk = module.params.get('force_bulk', False)
 
@@ -80,6 +81,9 @@ class CloudflareBulkHelper:
             cloudflare_backup_filename=dict(
                 type='str',
                 default='backup_list_bulk_redirects.csv',
+                required=False),
+            target_domain=dict(
+                type='str',
                 required=False),
             google_drive_folder_id=dict(
                 type='str',
@@ -465,8 +469,7 @@ class CloudflareBulkHelper:
         clean_url = clean_url.split('?')[0].split('#')[0]
         return clean_url
 
-    @staticmethod
-    def format_target_url(url):
+    def format_target_url(self, url):
         """
         Ensure target URL always starts with explicit https:// schema.
         """
@@ -476,6 +479,17 @@ class CloudflareBulkHelper:
             clean_url = re.sub(r'^https?://', 'https://', clean_url, flags=re.IGNORECASE)
         else:
             clean_url = f"https://{clean_url}"
+
+        if self.target_domain:
+            parsed = urlparse(clean_url)
+            
+            clean_target_domain = re.sub(r'^https?://', '', self.target_domain.strip(), flags=re.IGNORECASE).rstrip('/')
+            
+            clean_url = f"{parsed.scheme}://{clean_target_domain}{parsed.path}"
+            if parsed.query:
+                clean_url += f"?{parsed.query}"
+            if parsed.fragment:
+                clean_url += f"#{parsed.fragment}"
 
         return clean_url
 

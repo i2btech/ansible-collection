@@ -43,6 +43,11 @@ options:
         type: str
         default: "backup_list_bulk_redirects.csv"
         required: false
+    target_domain:
+        description:
+            - Optional canonical domain to force on target URLs (e.g., 'www.example.cl').
+        type: str
+        required: false
     google_drive_folder_id:
         description:
             - ID of the Google Drive Folder where the backup CSV will be uploaded.
@@ -104,6 +109,7 @@ EXAMPLES = r'''
     cloudflare_api_token: "{{ cloudflare_api_token }}"
     cloudflare_list_id: "abc123xyz456"
     cloudflare_filename: "redirects.csv"
+    target_domain: "www.example.cl"
     replace_existing: true
     force_bulk: true
     google_drive_folder_id: "1A2b3C4d5E6f7G8h9I0J"
