@@ -48,6 +48,11 @@ options:
             - Optional canonical domain to force on target URLs (e.g., 'www.example.cl').
         type: str
         required: false
+    domain_mapping:
+        description:
+            - Key-value dictionary representing domain mappings, e.g. '{"domain.cl": "www.domain.cl"}'.
+        type: dict
+        required: false
     google_drive_folder_id:
         description:
             - ID of the Google Drive Folder where the backup CSV will be uploaded.
@@ -57,11 +62,6 @@ options:
         description:
             - Path to the JSON service account credential file for Google Drive API.
         type: path
-        required: false
-    google_impersonated_user:
-        description:
-            - Email address of the user to impersonate for Domain-Wide Delegation.
-        type: str
         required: false
     replace_existing:
         description:
@@ -110,11 +110,13 @@ EXAMPLES = r'''
     cloudflare_list_id: "abc123xyz456"
     cloudflare_filename: "redirects.csv"
     target_domain: "www.example.cl"
+    domain_mapping:
+        "example.cl":"www.example.cl"
+        "https://example.cl":"https://www.example.cl"
     replace_existing: true
     force_bulk: true
     google_drive_folder_id: "1A2b3C4d5E6f7G8h9I0J"
     google_credential_file: "{{ playbook_dir }}/credential.json"
-    google_impersonated_user: "admin@domain.com"
 '''
 
 RETURN = r'''
