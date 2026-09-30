@@ -10,6 +10,8 @@ import re
 import csv
 import json
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import urlencode, urlparse
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.urls import fetch_url
@@ -47,12 +49,12 @@ class CloudflareBulkHelper:
         self.filename = module.params.get('cloudflare_filename')
         self.backup_filename = module.params.get('cloudflare_backup_filename')
         self.target_domain = module.params.get('target_domain')
+        self.domain_mapping = module.params.get('domain_mapping')
         self.replace_existing = module.params.get('replace_existing', False)
         self.force_bulk = module.params.get('force_bulk', False)
 
         self.google_drive_folder_id = module.params.get('google_drive_folder_id')
         self.google_credential_file = module.params.get('google_credential_file')
-        self.google_impersonated_user = module.params.get('google_impersonated_user')
 
         self.payload_post = []
         self.payload_put = []
@@ -85,15 +87,16 @@ class CloudflareBulkHelper:
             target_domain=dict(
                 type='str',
                 required=False),
+            domain_mapping=dict(
+                type='dict',
+                required=False,
+                default={}),
             google_drive_folder_id=dict(
                 type='str',
                 required=False),
             google_credential_file=dict(
                 type='path',
                 default='credential.json',
-                required=False),
-            google_impersonated_user=dict(
-                type='str',
                 required=False),
             replace_existing=dict(
                 type='bool',
@@ -174,10 +177,6 @@ class CloudflareBulkHelper:
                 scopes=target_scopes
             )
 
-            # Apply domain-wide delegation if impersonated user is provided
-            if self.google_impersonated_user:
-                credentials = credentials.with_subject(self.google_impersonated_user)
-
             # Essential: cache_discovery=False prevents external discovery document network failures
             service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
 
@@ -208,7 +207,9 @@ class CloudflareBulkHelper:
         Generate a local CSV backup containing all existing Cloudflare list items.
         """
         try:
-            filepath = self.backup_filename
+            chile_tz = ZoneInfo('America/Santiago')
+            timestamp = datetime.now(chile_tz).strftime("%Y%m%d_%H%M%S")
+            filepath = f"{timestamp}_{self.backup_filename}"
             if not os.path.isabs(filepath):
                 filepath = os.path.join(os.getcwd(), filepath)
 
@@ -217,9 +218,9 @@ class CloudflareBulkHelper:
                 writer.writerow(['origen', 'destino', 'preserve query string'])
                 writer.writerows(
                     (
-                        item['redirect']['source_url'],
-                        item['redirect']['target_url'],
-                        item['redirect']['preserve_query_string']
+                        item['redirect'].get('source_url', ''),
+                        item['redirect'].get('target_url', ''),
+                        item['redirect'].get('preserve_query_string', False)
                     )
                     for item in items if 'redirect' in item
                 )
@@ -471,7 +472,7 @@ class CloudflareBulkHelper:
 
     def format_target_url(self, url):
         """
-        Ensure target URL always starts with explicit https:// schema.
+        Ensure target URL always starts with explicit https:// schema and applies domain mapping.
         """
         clean_url = url.strip()
 
@@ -480,16 +481,23 @@ class CloudflareBulkHelper:
         else:
             clean_url = f"https://{clean_url}"
 
-        if self.target_domain:
-            parsed = urlparse(clean_url)
-            
-            clean_target_domain = re.sub(r'^https?://', '', self.target_domain.strip(), flags=re.IGNORECASE).rstrip('/')
-            
-            clean_url = f"{parsed.scheme}://{clean_target_domain}{parsed.path}"
+        parsed = urlparse(clean_url)
+        domain = parsed.netloc.lower()
+
+        if self.domain_mapping and domain in self.domain_mapping:
+            new_domain = self.domain_mapping[domain]
+            clean_url = f"{parsed.scheme}://{new_domain}{parsed.path}"
+
             if parsed.query:
                 clean_url += f"?{parsed.query}"
+
             if parsed.fragment:
                 clean_url += f"#{parsed.fragment}"
+
+        elif not domain and self.target_domain:
+            clean_target = re.sub(r'^https?://', '', self.target_domain, flags=re.IGNORECASE).rstrip('/')
+            path = parsed.path if parsed.path.startswith('/') else f"/{parsed.path}"
+            clean_url = f"https://{clean_target}{path}"
 
         return clean_url
 

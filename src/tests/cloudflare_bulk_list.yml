@@ -15,9 +15,12 @@
         cloudflare_api_token: "{{ cloudflare_api_token }}"
         cloudflare_list_id: "{{ cloudflare_list_id }}"
         google_drive_folder_id: "{{ google_drive_folder_id }}"
-        google_impersonated_user: "{{ google_impersonated_user }}"
-        target_domain: "www.example.cl"
         cloudflare_filename: "redirects.csv"
+        target_domain: "www.example.cl"
+        domain_mapping:
+          "example.cl": "www.example.cl"
+          "https://example.cl": "https://www.example.cl"
+        cloudflare_backup_filename: "redirects_backup.csv"
       tags: add
 
     - name: Agregar redirecciones desde CSV con force_bulk=True
@@ -26,8 +29,12 @@
         cloudflare_api_token: "{{ cloudflare_api_token }}"
         cloudflare_list_id: "{{ cloudflare_list_id }}"
         google_drive_folder_id: "{{ google_drive_folder_id }}"
-        google_impersonated_user: "{{ google_impersonated_user }}"
         cloudflare_filename: "redirects.csv"
+        target_domain: "www.example.cl"
+        domain_mapping:
+          "example.cl": "www.example.cl"
+          "https://example.cl": "https://www.example.cl"
+        cloudflare_backup_filename: "redirects_backup.csv"
         force_bulk: true
       tags: add-force
 
@@ -37,8 +44,12 @@
         cloudflare_api_token: "{{ cloudflare_api_token }}"
         cloudflare_list_id: "{{ cloudflare_list_id }}"
         google_drive_folder_id: "{{ google_drive_folder_id }}"
-        google_impersonated_user: "{{ google_impersonated_user }}"
         cloudflare_filename: "redirects.csv"
+        target_domain: "www.example.cl"
+        domain_mapping:
+          "example.cl": "www.example.cl"
+          "https://example.cl": "https://www.example.cl"
+        cloudflare_backup_filename: "redirects_backup.csv"
         replace_existing: true
       tags: replace
 
