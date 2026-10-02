@@ -1,0 +1,16 @@
+- name: Chequear membresía en grupo todos@i2btech.com
+  hosts: localhost
+  connection: local
+  vars_files:
+    - vars/gws.yml
+
+  tasks:
+    - name: Validar presencia de usuarios en el grupo global
+      i2btech.ops.gws_group_checker:
+        credential_file: "credential.json"
+        group_email: "group.user@i2btech.com"
+        expected_users: "{{ gws_users | map(attribute='mail') | list }}"
+        excluded_users:
+          - "user.name@i2btech.com"
+          - "other.user@i2btech.com"
+      register: group_check
