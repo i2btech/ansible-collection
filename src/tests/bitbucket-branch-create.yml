@@ -1,0 +1,49 @@
+- name: "Validate creation of branch"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+
+    - vars/bitbucket.yml
+
+  tasks:
+
+    - name: Test bitbucket_branch_restriction module
+      i2btech.ops.bitbucket_branch_restriction:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        repository: "poc-sample"
+        restrictions:
+          - kind: push
+            branch_match_kind: glob
+            pattern: "master"
+            users: []
+            groups: []
+
+    - name: "Create release branch"
+      i2btech.ops.bitbucket_branch_create:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        repository: "poc-sample"
+        branch_name: "release/integration"
+        target_branch: "master"
+        state: "present"
+
+    - name: Test bitbucket_branch_restriction module
+      i2btech.ops.bitbucket_branch_restriction:
+        username: "{{ bb_user }}"
+        password: "{{ bb_pass }}"
+        repository: "poc-sample"
+        restrictions:
+          - kind: push
+            branch_match_kind: glob
+            pattern: "master"
+            users: []
+            groups: []
+          - kind: push
+            branch_match_kind: branching_model
+            branch_type: release
+            users: []
+            groups: []

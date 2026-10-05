@@ -234,6 +234,34 @@ class BitbucketHelper:
 
         return None
 
+    def create_initial_commit(self, branch_name="master"):
+        """
+        Create the initial commit and default branch (master) 
+        """
+
+        payload = urlencode({
+            'branch': branch_name,
+            'message': 'Initial commit',
+            '/README.md': f"# {self.module.params['repository']}\n\nRepository initialized automatically."
+        })
+
+        info, content = self.request(
+                    api_url=self.BITBUCKET_API_ENDPOINTS['repos'].format(
+                        url=self.BITBUCKET_API_URL,
+                        workspace='i2b',
+                        repo_slug=self.module.params['repository']
+                    ) + '/src',
+                    module=self.module,
+                    method='POST',
+                    headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                    data=payload
+                )
+        
+        if info['status'] in (200, 201):
+            return True
+
+        return False
+
     def create_branch(self, branch_name, target_branch="master"):
         """
         Create a bitbucket repository branch

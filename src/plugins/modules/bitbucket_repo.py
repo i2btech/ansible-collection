@@ -124,7 +124,7 @@ def run_module():
     # Create new repository in case it doesn't exist
     if not existing_repository and (module.params['state'] == 'present'):
         if not module.check_mode:
-            result['changed'] = bitbucket.create_repository()
+            result['changed'] = bitbucket.create_repository() and bitbucket.create_initial_commit()
             # TODO: maybe we can check if the pipeline is enabled already, if not, enable
             # Get configuration of pipeline: GET /2.0/repositories/{workspace}/{repo_slug}/pipelines_config
             bitbucket.enable_repository_pipeline()
