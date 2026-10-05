@@ -26,6 +26,7 @@ error_messages = {
     'repository_already_exists': 'A repository with same name ({repositorySlug}) already exists',
     'insufficient_permissions_to_delete': 'The currently authenticated user has insufficient permissions to delete `{repositorySlug}` repository',
     'insufficient_permissions_to_create': 'The currently authenticated user has insufficient permissions to create `{repositorySlug}` repository',
+    'branch_already_exists': 'Branch `{branchName}` already exists in `{repositorySlug}`',
     'unknown_error': 'An unknown error happened `{info}',
 }
 
@@ -45,6 +46,7 @@ class BitbucketHelper:
         'repos-environments': '{url}/repositories/{workspace}/{repo_slug}/environments',
         'repos-deployments': '{url}/repositories/{workspace}/{repo_slug}/deployments_config',
         'repos-branch-restrictions': '{url}/repositories/{workspace}/{repo_slug}/branch-restrictions',
+        'repos-create-branch': '{url}/repositories/{workspace}/{repo_slug}/refs/branches',
     }
 
     def __init__(self, module):
@@ -220,6 +222,74 @@ class BitbucketHelper:
             self.module.fail_json(
                 msg=error_messages['validation_error'].format(
                     repositorySlug=self.module.params['repository'],
+                )
+            )
+
+        if info['status'] != 200:
+            self.module.fail_json(
+                msg=error_messages['unknown_error'].format(
+                    info=info,
+                )
+            )
+
+        return None
+
+    def create_initial_commit(self, branch_name="master"):
+        """
+        Create the initial commit and default branch (master) 
+        """
+
+        payload = urlencode({
+            'branch': branch_name,
+            'message': 'Initial commit',
+            '/README.md': f"# {self.module.params['repository']}\n\nRepository initialized automatically."
+        })
+
+        info, content = self.request(
+                    api_url=self.BITBUCKET_API_ENDPOINTS['repos'].format(
+                        url=self.BITBUCKET_API_URL,
+                        workspace='i2b',
+                        repo_slug=self.module.params['repository']
+                    ) + '/src',
+                    module=self.module,
+                    method='POST',
+                    headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                    data=payload
+                )
+        
+        if info['status'] in (200, 201):
+            return True
+
+        return False
+
+    def create_branch(self, branch_name, target_branch="master"):
+        """
+        Create a bitbucket repository branch
+        """
+
+        info, content = self.request(
+            api_url=self.BITBUCKET_API_ENDPOINTS['repos-create-branch'].format(
+                url=self.BITBUCKET_API_URL,
+                workspace='i2b',
+                repo_slug=self.module.params['repository']
+            ),
+            module=self.module,
+            method='POST',
+            data={
+                'name': branch_name,
+                'target': {
+                    "hash": target_branch
+                }
+            },
+        )
+
+        if info['status'] == 201:
+            return True
+
+        if info['status'] == 400:
+            self.module.fail_json(
+                msg=error_messages['branch_already_exists'].format(
+                    repositorySlug=self.module.params['branch_name'],
                 )
             )
 

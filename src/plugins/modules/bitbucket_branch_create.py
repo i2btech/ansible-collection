@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-""" bitbucket_repo module """
+""" bitbucket_branch_create module """
 
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,11 +9,11 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 ---
-module: bitbucket_repo
-short_description: Manage repositories on Bitbucket Cloud
+module: bitbucket_branch_create
+short_description: Manage branches on Bitbucket Cloud
 version_added: "1.0.0"
 description:
-    - Manage repositories on Bitbucket Cloud
+    - Manage branches on Bitbucket Cloud repositories
 options:
     username:
         description:
@@ -30,30 +30,36 @@ options:
             - Repository name.
         type: str
         required: true
-    project_key:
+    branch_name:
         description:
-            - Bitbucket project key.
+            - Branch name to create.
         type: str
         required: true
+    target_branch:
+        description:
+            - Target branch or hash to branch off from.
+        type: str
+        default: master
     state:
         description:
-            - Whether the repository should exist or not.
+            - Whether the branch should exist or not.
         type: str
         default: present
-        choices: [ absent, present ]
+        choices: [ present ]
         required: true
 author:
     - IT I2B (it@i2btech.com)
 '''
 
 EXAMPLES = r'''
-- name: "Create example repository"
-  i2btech.ops.bitbucket_repo:
-  username: "alice"
-  password: "app_password"
-  repository: "example-X"
-  project_key: "POC"
-  state: "present"
+- name: "Create release branch"
+  i2btech.ops.bitbucket_branch_create:
+    username: "alice"
+    password: "app_password"
+    repository: "example-X"
+    branch_name: "release/integration"
+    target_branch: "master"
+    state: "present"
 '''
 
 RETURN = r'''
@@ -76,19 +82,23 @@ def run_module():
 
     module_args = BitbucketHelper.bitbucket_argument_spec()
     module_args.update(
-        project_key=dict(
-            type='str',
-            required=True,
-            no_log=False,
-            aliases=['project']),
         repository=dict(
             type='str',
             required=True,
             no_log=False,
             aliases=['name']),
+        branch_name=dict(
+            type='str',
+            required=True,
+            no_log=False,
+            aliases=['branch']),
+        target_branch=dict(
+            type='str',
+            default='master',
+            no_log=False),
         state=dict(
             type='str',
-            choices=['present', 'absent'],
+            choices=['present'],
             default='present'),
     )
 
@@ -119,20 +129,16 @@ def run_module():
 
     bitbucket = BitbucketHelper(module)
 
-    existing_repository = bitbucket.get_repository_info()
-
-    # Create new repository in case it doesn't exist
-    if not existing_repository and (module.params['state'] == 'present'):
+    if module.params['state'] == 'present':
         if not module.check_mode:
-            result['changed'] = bitbucket.create_repository() and bitbucket.create_initial_commit()
-            # TODO: maybe we can check if the pipeline is enabled already, if not, enable
-            # Get configuration of pipeline: GET /2.0/repositories/{workspace}/{repo_slug}/pipelines_config
-            bitbucket.enable_repository_pipeline()
+            result['changed'] = bitbucket.create_branch(
+                branch_name=module.params['branch_name'],
+                target_branch=module.params['target_branch']
+            )
 
     if result is not None:
         module.exit_json(**result)
     else:
-        # in case of an unknown error
         module.exit_json(**result)
 
 def main():
