@@ -47,6 +47,7 @@ class BitbucketHelper:
         'repos-deployments': '{url}/repositories/{workspace}/{repo_slug}/deployments_config',
         'repos-branch-restrictions': '{url}/repositories/{workspace}/{repo_slug}/branch-restrictions',
         'repos-create-branch': '{url}/repositories/{workspace}/{repo_slug}/refs/branches',
+        'repos-get-branch': '{url}/repositories/{workspace}/{repo_slug}/refs/branches/{branch_name}',
     }
 
     def __init__(self, module):
@@ -262,10 +263,33 @@ class BitbucketHelper:
 
         return False
 
+    def check_branch_exists(self, branch_name):
+        """
+        Check if branch already exists in repository
+        """
+        info, content = self.request(
+            api_url=self.BITBUCKET_API_ENDPOINTS['repos-get-branch'].format(
+                url=self.BITBUCKET_API_URL,
+                workspace='i2b',
+                repo_slug=self.module.params['repository'],
+                branch_name=branch_name
+            ),
+            module=self.module,
+            method='GET'
+        )
+
+        if info['status'] == 200:
+            return True
+        
+        return False
+
     def create_branch(self, branch_name, target_branch="master"):
         """
         Create a bitbucket repository branch
         """
+
+        if self.check_branch_exists(branch_name):
+            return False
 
         info, content = self.request(
             api_url=self.BITBUCKET_API_ENDPOINTS['repos-create-branch'].format(
