@@ -287,11 +287,7 @@ class BitbucketHelper:
             return True
 
         if info['status'] == 400:
-            self.module.fail_json(
-                msg=error_messages['branch_already_exists'].format(
-                    repositorySlug=self.module.params['branch_name'],
-                )
-            )
+            return False
 
         if info['status'] != 200:
             self.module.fail_json(
