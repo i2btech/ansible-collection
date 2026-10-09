@@ -185,16 +185,22 @@ class GoogleWorkspaceUserHelper:
                 break
 
             # get list of groups to define to which ones the user need to be added
-            groups_definition = self.module.params['groups_definition'] if "groups_definition" in self.module.params else []
+            groups_definition = self.module.params['groups_definition'] or []
             groups_to_be_added = []
+            # groups whose membership is controlled by groups_definition, self managed
+            # groups (admins present) are excluded since its membership is handled at runtime
+            managed_groups = []
             for group in groups_definition:
+                if "admins" in group:
+                    continue
+                managed_groups.append(group["mail"])
                 members_list = group['members'] if "members" in group else []
                 if user in members_list:
                    groups_to_be_added.append(group["mail"])
 
             IF_EXIST_RES=self.check_if_exists(service_directory, user, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
-                result = self.update(service_directory, user_definition, groups_to_be_added, self.module.params['domain_name'])
+                result = self.update(service_directory, user_definition, groups_to_be_added, managed_groups)
             elif IF_EXIST_RES == "FALSE":
                 result = self.create(service_directory, user_definition, groups_to_be_added)
             else:
@@ -260,7 +266,7 @@ class GoogleWorkspaceUserHelper:
         return result
 
 
-    def update(self, service_directory, user, groups_to_be_added, domain_name):
+    def update(self, service_directory, user, groups_to_be_added, managed_groups):
         result = {
             "changed": False,
             "failed": False,
@@ -277,44 +283,56 @@ class GoogleWorkspaceUserHelper:
                     "displayName": user["full_name"]
                 }
             }
-            res = service_directory.users().update(
-                userKey=user["mail"],
-                body=body_info
-                ).execute()
-            # TODO: need to validate if options where actually changed
-            result["changed"] = True
 
-            # get current memberships
-            current_memberships = []
-            results = (
-                service_directory.groups()
-                .list(
-                    domain=domain_name,
-                    userKey=user["mail"]
-                )
-                .execute()
-            )
-            if "groups" in results:
-                for group in results["groups"]:
-                    current_memberships.append(group["email"])
+            # only update user if its information is different
+            current_user = service_directory.users().get(userKey=user["mail"]).execute()
+            current_name = current_user.get("name", {})
+            if (
+                current_user.get("primaryEmail", "").lower() != user["mail"].lower()
+                or current_name.get("fullName") != user["full_name"]
+                or current_name.get("familyName") != user["last_name"]
+                or current_name.get("givenName") != user["first_name"]
+            ):
+                service_directory.users().update(
+                    userKey=user["mail"],
+                    body=body_info
+                    ).execute()
+                result["changed"] = True
 
-            # delete memberships
-            for deleted in set(current_memberships).difference(groups_to_be_added):
+            desired = set(group.lower() for group in groups_to_be_added)
+            managed = set(group.lower() for group in managed_groups)
+
+            # get current memberships, checked directly against each managed group
+            # (groups().list with userKey only works for a single domain)
+            current = set()
+            for group in managed:
+                try:
+                    service_directory.members().get(
+                        groupKey=group,
+                        memberKey=user["mail"]
+                    ).execute()
+                    current.add(group)
+                except errors.HttpError as error:
+                    if error.resp.status != 404:
+                        raise
+
+            # delete memberships, only from groups managed by groups_definition
+            for deleted in sorted((current & managed) - desired):
                 res = GoogleWorkspaceGroupHelper.member_insert_delete(self, "delete", service_directory, deleted, user["mail"])
-                if res != "OK":
+                if res == "OK":
+                    result["changed"] = True
+                elif "Resource Not Found" not in res:
                     result["failed"] = True
                     result["message"].append(deleted + ": " + res)
-                else:
-                    result["changed"] = True
 
             # add memberships
-            for added in set(groups_to_be_added).difference(current_memberships):
+            for added in sorted(desired - current):
                 res = GoogleWorkspaceGroupHelper.member_insert_delete(self, "insert", service_directory, added, user["mail"])
-                if res != "OK":
+                if res == "OK":
+                    result["changed"] = True
+                elif "Member already exists" not in res:
                     result["failed"] = True
                     result["message"].append(added + ": " + res)
-                else:
-                    result["changed"] = True
 
         except Exception as error:
             result["failed"] = True
