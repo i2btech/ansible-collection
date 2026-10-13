@@ -200,7 +200,7 @@ class GoogleWorkspaceUserHelper:
 
             IF_EXIST_RES=self.check_if_exists(service_directory, user, self.module.params['customer_id'])
             if IF_EXIST_RES == "TRUE":
-                result = self.update(service_directory, user_definition, groups_to_be_added, managed_groups)
+                result = self.update(service_directory, user_definition, groups_to_be_added, self.module.params['domain_name'], managed_groups)
             elif IF_EXIST_RES == "FALSE":
                 result = self.create(service_directory, user_definition, groups_to_be_added)
             else:
@@ -266,7 +266,7 @@ class GoogleWorkspaceUserHelper:
         return result
 
 
-    def update(self, service_directory, user, groups_to_be_added, managed_groups):
+    def update(self, service_directory, user, groups_to_be_added, domain_name, managed_groups):
         result = {
             "changed": False,
             "failed": False,
@@ -302,19 +302,18 @@ class GoogleWorkspaceUserHelper:
             desired = set(group.lower() for group in groups_to_be_added)
             managed = set(group.lower() for group in managed_groups)
 
-            # get current memberships, checked directly against each managed group
-            # (groups().list with userKey only works for a single domain)
             current = set()
-            for group in managed:
-                try:
-                    service_directory.members().get(
-                        groupKey=group,
-                        memberKey=user["mail"]
-                    ).execute()
-                    current.add(group)
-                except errors.HttpError as error:
-                    if error.resp.status != 404:
-                        raise
+            results = (
+                service_directory.groups()
+                .list(
+                    domain=domain_name,
+                    userKey=user["mail"]
+                )
+                .execute()
+            )
+            if "groups" in results:
+                for group in results["groups"]:
+                    current.add(group["email"])
 
             # delete memberships, only from groups managed by groups_definition
             for deleted in sorted((current & managed) - desired):
