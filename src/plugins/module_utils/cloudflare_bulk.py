@@ -249,8 +249,14 @@ class CloudflareBulkHelper:
                 next(reader, None)
 
                 for row in reader:
-                    if not row or len(row) < 2:
+                    if not row or not any(field.strip() for field in row):
                         continue
+
+                    if len(row) < 2:
+                        self.module.fail_json(
+                            msg=f"Formato de CSV inválido en '{self.filename}'. "
+                                f"Se esperaban al menos 2 columnas (origen, destino), pero se detectó: {row}"
+                        )
 
                     if len(row) < 3 or not row[2].strip():
                         preserve_query_string = True
