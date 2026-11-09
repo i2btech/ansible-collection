@@ -94,7 +94,7 @@ msg:
 '''
 
 #pylint: disable=wrong-import-position
-from ansible_collections.i2btech.ops.plugins.module_utils.cloudflare_bulk import CloudflareBulkRestoreHelper
+from ansible_collections.i2btech.ops.plugins.module_utils.cloudflare_bulk_restore import CloudflareBulkRestoreHelper
 from ansible.module_utils.basic import AnsibleModule
 #pylint: disable=wrong-import-position
 

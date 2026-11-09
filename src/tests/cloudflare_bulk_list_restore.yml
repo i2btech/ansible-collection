@@ -1,0 +1,17 @@
+- name: "Cloudflare Bulk Redirects Module"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_files:
+    - vars/cloudflare.yml
+
+  tasks:
+
+    - name: Agregar redirecciones desde CSV
+      i2btech.ops.cloudflare_bulk_redirects_restore:
+        cloudflare_account: "{{ cloudflare_account }}"
+        cloudflare_api_token: "{{ cloudflare_api_token }}"
+        cloudflare_list_id: "{{ cloudflare_list_id }}"
+        cloudflare_backup_filename: "backup_list_bulk_redirects.csv"
