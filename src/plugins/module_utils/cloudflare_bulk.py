@@ -258,16 +258,18 @@ class CloudflareBulkHelper:
                                 f"Se esperaban al menos 2 columnas (origen, destino), pero se detectó: {row}"
                         )
 
-                    if len(row) < 3 or not row[2].strip():
-                        preserve_query_string = True
-                    else:
-                        preserve_query_string = self.parse_bool(row[2])
-
                     source = self.format_source_url(row[0].strip())
                     target = self.format_target_url(row[1].strip())
 
                     if self.is_home(source) or source in local_sources:
                         continue
+
+                    if urlparse(target).query:
+                        preserve_query_string = False
+                    elif len(row) < 3 or not row[2].strip():
+                        preserve_query_string = True
+                    else:
+                        preserve_query_string = self.parse_bool(row[2])
 
                     local_sources.add(source)
 
